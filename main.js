@@ -47,8 +47,8 @@ function createSRHeader(course, sr_id) {
     //create Standard Resources text header
     canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules/${sr_id}/items`),
             {
-                `module_item[title]` : `Standard Resources`,
-                `module_item[type]` : `SubHeader`
+                'module_item[title]' : 'Standard Resources',
+                'module_item[type]' : 'SubHeader'
             },
             (postErr, results) => {
                 if (postErr) {
