@@ -39,6 +39,10 @@ function makeStudentResourcesModule(course) {
     return id;
 }
 
+/**********************************************
+* createSRHeader()
+* Parameters: course object, student resources id
+**********************************************/
 function createSRHeader(course, sr_id) {
     //create Standard Resources text header
     canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules/${sr_id}/items`),
@@ -56,7 +60,11 @@ function createSRHeader(course, sr_id) {
             };
 }
 
-function deleteDueDates(course, welcome_id) {
+/**********************************************
+* deleteUnderstandDueDatesPage()
+* Parameters: course object, welcome id
+**********************************************/
+function deleteUnderstandDueDatesPage(course, welcome_id) {
     //delete "How to Understand Due Dates" if it exists
     canvas.get(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_id}/items`, (getErr, module_items) => {
         if (getErr) {
@@ -68,7 +76,7 @@ function deleteDueDates(course, welcome_id) {
             asyncLib.each(module_items, (topic, cb) => {
                 //Standard Naming Scheme: How to Understand Due Dates
                 //Might have to use Regex to catch all possible scenarios
-                if (topic.name == 'How to Understand Due Dates') {
+                if (topic.title == 'How to Understand Due Dates') {
                     canvas.delete(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_id}/items/${topic.id}`, (deleteErr, results) => {
                         if (deleteErr) {
                             course.throwErr(`disperse-welcome-module`, deleteErr);
@@ -86,6 +94,7 @@ function deleteDueDates(course, welcome_id) {
 
 function moveContents(course, welcome_id, sr_id) {
     //move everything to student resources folder
+    //https://canvas.instructure.com/doc/api/modules.html#method.context_module_items_api.update
 }
 
 /*************************************************
@@ -133,26 +142,22 @@ module.exports = (course, stepCallback) => {
             return;
         } else {
             //end program if welcome_course_id == -1
+            if (welcome_course_id == -1) {
+                //move on to the next child module
 
-            //check to see if Student Resources module exists. if not, call a function to create one
-            if (student_resources_id <= -1) {
-                student_resources_id = makeStudentResourcesModule(course);
+                course.success('disperse-welcome-folder', 'welcome folder doesn\'t exist. moving on..');
+                stepCallback(null, course);
+            } else {
+                //check to see if Student Resources module exists. if not, call a function to create one
+                if (student_resources_id <= -1) {
+                    student_resources_id = makeStudentResourcesModule(course);
+                }
+
+                //call function to move welcome folder contents to student resources modules
+                welcomeFolder(course, welcome_course_id, student_resources_id);
+                course.success('disperse-welcome-folder', 'disperse-welcome-folder successfully completed.');
+                stepCallback(null, course);
             }
-
-            //call function to move welcome folder contents to student resources modules
-            welcomeFolder(course, welcome_course_id, student_resources_id);
         }
     };
-
-
-    /* Used to log successful actions */
-    course.success('disperse-welcome-folder', 'moduleName successfully ...');
-
-    /* How to report an error (Replace "moduleName") */
-    // course.throwErr('moduleName', e);
-
-    /* You should never call the stepCallback with an error. We want the
-    whole program to run when testing so we can catch all existing errors */
-
-    stepCallback(null, course);
 };
