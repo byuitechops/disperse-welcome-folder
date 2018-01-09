@@ -12,6 +12,7 @@ const asyncLib = require('async');
 //ids for modules
 var welcome_module_id = -1;
 var student_resources_id = -1;
+var modules_length = -1;
 
 module.exports = (course, stepCallback) => {
 
@@ -20,19 +21,22 @@ module.exports = (course, stepCallback) => {
 
 	/**********************************************
 	 * makeStudentResourcesModule()
-	 * Parameters: course object
+	 * Parameters: course object, functionCallback
 	 **********************************************/
-	function makeStudentResourcesModule(course, cb) {
+	function makeStudentResourcesModule(course, functionCallback) {
 		//course.success(`disperse-welcome-folder`, `No Student Resources folder. About to create one.`);
 
 		//create the module
 		canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules`, {
-				'module[name]': 'Student Resources'
+				'module': {
+					'name' : 'Student Resources',
+					'position' : modules_length
+				}
 			},
 			(postErr, module) => {
 				if (postErr) {
-					// handle errs in the cb
-					cb(postErr, course);
+					// handle errs in the functionCallback
+					functionCallback(postErr, course);
 					return;
 				} else {
 					course.success(`disperse-welcome-folder`,
@@ -40,19 +44,18 @@ module.exports = (course, stepCallback) => {
 
 					//the update module call in the canvas api requires the endpoint module id
 					student_resources_id = module.id;
-					cb(null, course);
+					functionCallback(null, course);
 				}
 			});
 	}
 
 	/**********************************************
 	 * createSRHeader()
-	 * Parameters: course object, student resources id
+	 * Parameters: functionCallback
 	 **********************************************/
-	function createSRHeader(callback) {
+	function createSRHeader(functionCallback) {
 		//create Standard Resources text header
-		// I MAY BE BREAKING EVERYTHING...
-		canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules/${student_resources_id}/items`), {
+		canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules/${student_resources_id}/items`, {
 				'module_item': {
 					'title': 'Standard Resources',
 					'type': 'SubHeader'
@@ -61,20 +64,20 @@ module.exports = (course, stepCallback) => {
 			(postErr, results) => {
 				if (postErr) {
 					// move err handling to callback
-					callback(postErr);
+					functionCallback(postErr);
 					return;
 				} else {
 					course.success(`disperse-welcome-folder`, `Successfully created Standard Resources text header`);
-					callback(null);
+					functionCallback(null);
 				}
-			};
+			});
 	}
 
 	/**********************************************
 	 * deletePages()
-	 * Parameters: course object, welcome id
+	 * Parameters: functionCallback
 	 **********************************************/
-	function deletePages(callback) {
+	function deletePages(functionCallback) {
 		var pagesToDelete = [
 					'How to Understand Due Dates'
 			];
@@ -82,24 +85,30 @@ module.exports = (course, stepCallback) => {
 		canvas.get(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items`, (getErr, module_items) => {
 			if (getErr) {
 				// move err handling to callback
-				callback(getErr);
+				functionCallback(getErr);
 				return;
 			}
 			course.success(`disperse-welcome-folder`, `Successfully retrieved ${module_items.length} module items in Welcome Module`);
-			asyncLib.each(module_items, (topic, cb) => {
+			asyncLib.each(module_items, (topic, eachCallback) => {
 				//Standard Naming Scheme: How to Understand Due Dates
 				//Might have to use Regex to catch all possible scenarios
 				if (pagesToDelete.includes(topic.title)) {
 					canvas.delete(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${topic.id}`, (deleteErr, results) => {
 						if (deleteErr) {
-							cb(deleteErr);
+							eachCallback(deleteErr);
 							return;
 						}
 						course.success(`disperse-welcome-module`, `Successfully deleted moduleNameHere`);
-						cb(null);
+						eachCallback(null);
 					});
 				} else {
-					cb(null);
+					eachCallback(null);
+				}
+			}, (err) => {
+				if (err) {
+					functionCallback(err);
+				} else {
+					functionCallback(null, course);
 				}
 			});
 		});
@@ -107,77 +116,87 @@ module.exports = (course, stepCallback) => {
 
 	/**********************************************
 	 * moveContents()
-	 * Parameters: course object, welcome module id,
-	 * student resources id
+	 * Parameters: course object, functionCallback
 	 **********************************************/
-	function moveContents(course, callback) {
+	function moveContents(course, functionCallback) {
 		//move everything to student resources folder
 		//https://canvas.instructure.com/doc/api/modules.html#method.context_module_items_api.update
 
 		//get the welcome module contents
 		canvas.get(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items`, (getErr, module_items) => {
 			if (getErr) {
-				callback(getErr);
+				functionCallback(getErr);
 				return;
 			}
-			course.success(`disperse-welcome-folder`, `Successfully retrieved ${module_items.length} module items in Welcome Module`);
+			course.success(`disperse-welcome-folder`, `Successfully retrieved ${module_items.length} module items in Welcome module`);
+
 			//for each item in the welcome module, move it to the student resources module
-			asyncLib.each(module_items, (module_item, cb) => {
-				canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/items/${module_item.id}`, {
+			asyncLib.each(module_items, (module_item, eachCallback) => {
+				canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
 						'module_item': {
-							'module_id': student_resources_id
+							'module_id' : student_resources_id,
+							'position' : 2
 						}
 					},
 					(putErr, item) => {
 						if (putErr) {
-							cb(putErr);
+							eachCallback(putErr);
 							return;
 						}
-						course.success(`disperse-welcome-folder`, `Successfully moved ${item.title} into the Student Resources Module`);
-						cb(null);
+						course.success(`disperse-welcome-folder`, `Successfully moved ${item.title} into the Student Resources module`);
+						eachCallback(null, course);
 					});
 			}, (err) => {
 				if (err) {
-					callback(err);
+					functionCallback(err);
 					return;
 				}
-				callback(null);
+				functionCallback(null, course);
 			});
+		});
+	}
+
+	function deleteWelcomeModule(course, functionCallback) {
+		canvas.delete(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}`, (deleteErr, results) => {
+			if (deleteErr) {
+				functionCallback(deleteErr);
+				return;
+			} else {
+				course.success(`disperse-welcome-folder`, `Successfully deleted the welcome folder`);
+				functionCallback(null, course);
+			}
 		});
 	}
 
 	/*************************************************
 	 * welcomeFolder()
-	 * Parameters: Course object, welcome module id,
-	 * student resources id
+	 * Parameters: Course object, functionCallback
 	 *************************************************/
-	function welcomeFolder(course, cb) {
+	function welcomeFolder(course, functionCallback) {
 		//do async.waterfall here to run each of the functions
 		var myFunctions = [
 				createSRHeader,
 				deletePages,
-				moveContents
+				moveContents,
+				deleteWelcomeModule
 		];
 		asyncLib.waterfall(myFunctions, (waterfallErr, result) => {
 			if (waterfallErr) {
-				cb(waterfallErr, course);
+				functionCallback(waterfallErr, course);
 				return;
 			} else {
-				cb(null, course);
+				functionCallback(null, course);
 			}
 		});
 
 	}
 
-
-
 	/* Create the module report so that we can access it later as needed.
 	This MUST be done at the beginning of each child module. */
 	course.addModuleReport('disperse-welcome-folder');
 
-
-	/*******************************
-	 *           START HERE         *
+	/********************************
+	 *          STARTS HERE         *
 	 ********************************/
 	//Get module IDs since the course object does not come with a list of modules
 	canvas.get(`/api/v1/courses/${course.info.canvasOU}/modules`, (getErr, module_list) => {
@@ -185,22 +204,25 @@ module.exports = (course, stepCallback) => {
 			course.throwErr(`disperse-welcome-folder`, getErr);
 			return;
 		} else {
-			course.success(`disperse-welcome-folder`, `Successfully retrieved modules list`);
-			//loop through list of modules and get the IDs
+			course.success(`disperse-welcome-folder`, `Successfully retrieved ${module_list.length} modules.`);
 
+			modules_length = module_list.length;
+
+			//loop through list of modules and get the IDs
 			module_list.forEach(module => {
 				if (module.name == `Welcome`) {
 					welcome_module_id = module.id;
+					course.success(`disperse-welcome-folder`, `Welcome module ID: ${welcome_module_id}`);
 				} else if (module.name == `Student Resources`) {
 					student_resources_id = module.id;
+					course.success(`disperse-welcome-folder`, `Student Resources module ID: ${student_resources_id}`);
 				}
 			});
 
 			//end program if welcome_module_id == -1
-			if (welcome_module_id == -1) {
+			if (welcome_module_id <= -1) {
 				//move on to the next child module
-
-				course.throwWarning('disperse-welcome-folder', 'welcome folder doesn\'t exist. Moving on...');
+				course.throwWarning('disperse-welcome-folder', 'Welcome folder doesn\'t exist. Moving on...');
 				stepCallback(null, course);
 			} else {
 				//check to see if Student Resources module exists. if not, call a function to create one
@@ -214,7 +236,7 @@ module.exports = (course, stepCallback) => {
 						//call function to move welcome folder contents to student resources modules
 						welcomeFolder(course, (welcomeErr, course) => {
 							if (welcomeErr) {
-								// err handling here
+								//err handling here
 								course.throwErr('disperse-welcome-folder', welcomeErr);
 								stepCallback(null, course);
 								return;
