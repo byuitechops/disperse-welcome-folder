@@ -1,7 +1,7 @@
 {
     "name": "disperse-welcome-folder",
     "version": "1.0.0",
-    "description": "Put your child module's description here",
+    "description": "Move contents into the Student Resources module then deletes the empty Welcome module",
     "main": "main.js",
     "dependencies": {
         "canvas-wrapper": "git+https://github.com/byuitechops/Canvas-wrapper.git"
@@ -19,7 +19,7 @@
         "type": "git",
         "url": "git+https://github.com/byuitechops/disperse-welcome-folder.git"
     },
-    "author": "Zachary Williams, Daniel Green",
+    "author": "Seth Childers, Sam McGrath",
     "license": "MIT",
     "bugs": {
         "url": "https://github.com/byuitechops/disperse-welcome-folder/issues"
