@@ -137,42 +137,47 @@ module.exports = (course, stepCallback) => {
             }
 
             //for each item in the welcome module, move it to the student resources module
+			//setTimeout helps avoid the status code 500 error
             asyncLib.each(module_items, (module_item, eachCallback) => {
 				if (srArr.includes(module_item.title)) {
-					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
-							'module_item': {
-								'module_id': student_resources_id,
-								'indent': 1
-							}
-						},
-						(putErr, results) => {
-							if (putErr) {
-								eachCallback(putErr);
-								return;
-							}
-							course.success(`disperse-welcome-folder`,
-								`Successfully moved ${results.title} into the Student Resources module`);
-							eachCallback(null, course);
-						});
+					setTimeout(() => {
+						canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
+								'module_item': {
+									'module_id': student_resources_id,
+									'indent': 1
+								}
+							},
+							(putErr, results) => {
+								if (putErr) {
+									eachCallback(putErr);
+									return;
+								}
+								course.success(`disperse-welcome-folder`,
+									`Successfully moved ${results.title} into the Student Resources module`);
+								eachCallback(null, course);
+							});
+					}, 2000);
 				//ensuring that the links in the array are not underneath Standard Resources text title by setting position to 1
 				} else {
-					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
-							'module_item': {
-								'module_id': student_resources_id,
-								'indent': 1,
-								'position': 1
-							}
-						},
-						(putErr, results) => {
-							if (putErr) {
-								console.log(putErr);
-								eachCallback(putErr);
-								return;
-							}
-							course.success(`disperse-welcome-folder`,
-								`Successfully moved ${results.title} into the Student Resources module`);
-							eachCallback(null, course);
-						});
+					setTimeout(() => {
+						canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
+								'module_item': {
+									'module_id': student_resources_id,
+									'indent': 1,
+									'position': 1
+								}
+							},
+							(putErr, results) => {
+								if (putErr) {
+									console.log(putErr);
+									eachCallback(putErr);
+									return;
+								}
+								course.success(`disperse-welcome-folder`,
+									`Successfully moved ${results.title} into the Student Resources module`);
+								eachCallback(null, course);
+							});
+					}, 2000);
 				}
             }, (err) => {
                 if (err) {
@@ -184,6 +189,10 @@ module.exports = (course, stepCallback) => {
         });
     }
 
+	/**********************************************
+     * deleteWelcomeModule()
+     * Parameters: course object, functionCallback
+     **********************************************/
     function deleteWelcomeModule(course, functionCallback) {
         canvas.delete(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}`, (deleteErr, results) => {
             if (deleteErr) {
@@ -196,6 +205,10 @@ module.exports = (course, stepCallback) => {
         });
     }
 
+	/**********************************************
+     * moveStudentResourcesModule()
+     * Parameters: course object, moveCallback
+     **********************************************/
     function moveStudentResourcesModule(course, moveCallback) {
         canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${student_resources_id}`, {
                 'module': {
@@ -255,8 +268,6 @@ module.exports = (course, stepCallback) => {
             var manifest = course.content.find(file => {
                 return file.name == 'imsmanifest.xml';
             });
-
-            var $ = manifest.dom;
 
             modules_length = manifest.dom('organization>item').length;
 
