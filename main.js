@@ -78,7 +78,7 @@ module.exports = (course, stepCallback) => {
      **********************************************/
     function deletePages(functionCallback) {
         var pagesToDelete = [
-					'How to Understand Due Dates'
+					'How to Understand Due Date'
 			];
         //delete "How to Understand Due Dates" if it exists
         canvas.get(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items`, (getErr, module_items) => {
@@ -149,6 +149,7 @@ module.exports = (course, stepCallback) => {
 							},
 							(putErr, results) => {
 								if (putErr) {
+									console.log(`The Problem is here`);
 									eachCallback(putErr);
 									return;
 								}
@@ -156,7 +157,7 @@ module.exports = (course, stepCallback) => {
 									`Successfully moved ${results.title} into the Student Resources module`);
 								eachCallback(null, course);
 							});
-					}, 2000);
+					}, 5000);
 				//ensuring that the links in the array are not underneath Standard Resources text title by setting position to 1
 				} else {
 					setTimeout(() => {
@@ -169,7 +170,7 @@ module.exports = (course, stepCallback) => {
 							},
 							(putErr, results) => {
 								if (putErr) {
-									console.log(putErr);
+									console.log(`Actually, it's here...`);
 									eachCallback(putErr);
 									return;
 								}
@@ -255,7 +256,7 @@ module.exports = (course, stepCallback) => {
     /* Create the module report so that we can access it later as needed.
     This MUST be done at the beginning of each child module. */
     course.addModuleReport('disperse-welcome-folder');
-
+	setTimeout(() => {
     /********************************
      *          STARTS HERE         *
      ********************************/
@@ -314,4 +315,5 @@ module.exports = (course, stepCallback) => {
             }
         }
     });
+}, 7000);
 }
