@@ -29,8 +29,7 @@ module.exports = (course, stepCallback) => {
         //create the module
         canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules`, {
                 'module': {
-                    'name': 'Student Resources',
-                    'position': modules_length
+                    'name': 'Student Resources'
                 }
             },
             (postErr, module) => {
@@ -98,7 +97,7 @@ module.exports = (course, stepCallback) => {
                             eachCallback(deleteErr);
                             return;
                         }
-                        course.success(`disperse-welcome-module`, `Successfully deleted moduleNameHere`);
+                        course.success(`disperse-welcome-module`, `Successfully deleted ${topic.title}`);
                         eachCallback(null);
                     });
                 } else {
@@ -121,6 +120,14 @@ module.exports = (course, stepCallback) => {
     function moveContents(course, functionCallback) {
         //move everything to student resources folder
         //https://canvas.instructure.com/doc/api/modules.html#method.context_module_items_api.update
+		var srArr = [
+			'University Policies',
+			'Online Support Center',
+			'Library Research Guides',
+			'Academic Support Center',
+			'Copyright & Source Information',
+			'Copyright and Source Information'
+		];
 
         //get the welcome module contents
         canvas.get(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items`, (getErr, module_items) => {
@@ -131,19 +138,42 @@ module.exports = (course, stepCallback) => {
 
             //for each item in the welcome module, move it to the student resources module
             asyncLib.each(module_items, (module_item, eachCallback) => {
-                canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
-                        'module_item': {
-                            'module_id': student_resources_id,
-                        }
-                    },
-                    (putErr, item) => {
-                        if (putErr) {
-                            eachCallback(putErr);
-                            return;
-                        }
-                        course.success(`disperse-welcome-folder`, `Successfully moved ${item.title} into the Student Resources module`);
-                        eachCallback(null, course);
-                    });
+				if (srArr.includes(module_item.title)) {
+					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
+							'module_item': {
+								'module_id': student_resources_id,
+								'indent': 1
+							}
+						},
+						(putErr, results) => {
+							if (putErr) {
+								eachCallback(putErr);
+								return;
+							}
+							course.success(`disperse-welcome-folder`,
+								`Successfully moved ${results.title} into the Student Resources module`);
+							eachCallback(null, course);
+						});
+				//ensuring that the links in the array are not underneath Standard Resources text title by setting position to 1
+				} else {
+					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
+							'module_item': {
+								'module_id': student_resources_id,
+								'indent': 1,
+								'position': 1
+							}
+						},
+						(putErr, results) => {
+							if (putErr) {
+								console.log(putErr);
+								eachCallback(putErr);
+								return;
+							}
+							course.success(`disperse-welcome-folder`,
+								`Successfully moved ${results.title} into the Student Resources module`);
+							eachCallback(null, course);
+						});
+				}
             }, (err) => {
                 if (err) {
                     functionCallback(err);
@@ -169,7 +199,8 @@ module.exports = (course, stepCallback) => {
     function moveStudentResourcesModule(course, moveCallback) {
         canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${student_resources_id}`, {
                 'module': {
-                    'position': modules_length + 1 //add one to account for the added syllabus module
+					//add one to account for the added syllabus module
+                    'position': modules_length + 1
                 }
             },
             (moveErr, results) => {
@@ -177,7 +208,7 @@ module.exports = (course, stepCallback) => {
                     moveCallback(moveErr);
                     return;
                 } else {
-                    course.success(`disperse-welcome-folder`, `Successfully made ${module.title} the last module`);
+                    course.success(`disperse-welcome-folder`, `Successfully made Student Resources the last module`);
                     moveCallback(null, course);
                 }
             });
@@ -212,8 +243,6 @@ module.exports = (course, stepCallback) => {
     This MUST be done at the beginning of each child module. */
     course.addModuleReport('disperse-welcome-folder');
 
-
-
     /********************************
      *          STARTS HERE         *
      ********************************/
@@ -223,19 +252,15 @@ module.exports = (course, stepCallback) => {
             course.throwErr(`disperse-welcome-folder`, getErr);
             return;
         } else {
-            
             var manifest = course.content.find(file => {
                 return file.name == 'imsmanifest.xml';
             });
-            
-            var $ = manifest.dom;
-            
-            modules_length = manifest.dom('organization>item').length;
-//            console.log(modules_length);
-            
-            course.success(`disperse-welcome-folder`, `Successfully retrieved ${module_list.length} modules.`);
 
-//            modules_length = module_list.length;
+            var $ = manifest.dom;
+
+            modules_length = manifest.dom('organization>item').length;
+
+            course.success(`disperse-welcome-folder`, `Successfully retrieved ${modules_length} modules.`);
 
             //loop through list of modules and get the IDs
             module_list.forEach(module => {
