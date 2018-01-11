@@ -40,7 +40,6 @@ module.exports = (course, stepCallback) => {
                 } else {
                     course.success(`disperse-welcome-folder`,
                         `Successfully created Student Resources module. SR ID: ${module.id}`);
-
                     //the update module call in the canvas api requires the endpoint module id
                     student_resources_id = module.id;
                     functionCallback(null, course);
@@ -78,6 +77,7 @@ module.exports = (course, stepCallback) => {
      **********************************************/
     function deletePages(functionCallback) {
         var pagesToDelete = [
+                    //singular 'Date' instead of 'Dates' in case of misspelling. Check using '.includes()'
 					'How to Understand Due Date'
 			];
         //delete "How to Understand Due Dates" if it exists
@@ -90,7 +90,6 @@ module.exports = (course, stepCallback) => {
             course.success(`disperse-welcome-folder`, `Successfully retrieved ${module_items.length} module items in Welcome Module`);
             asyncLib.each(module_items, (topic, eachCallback) => {
                 //Standard Naming Scheme: How to Understand Due Dates
-                //Might have to use Regex to catch all possible scenarios
                 if (pagesToDelete.includes(topic.title)) {
                     canvas.delete(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${topic.id}`, (deleteErr, results) => {
                         if (deleteErr) {
@@ -120,7 +119,7 @@ module.exports = (course, stepCallback) => {
     function moveContents(course, functionCallback) {
         //move everything to student resources folder
         //https://canvas.instructure.com/doc/api/modules.html#method.context_module_items_api.update
-        var srArr = [
+        var topics = [
 			'University Policies',
 			'Online Support Center',
 			'Library Research Guides',
@@ -139,7 +138,7 @@ module.exports = (course, stepCallback) => {
             //for each item in the welcome module, move it to the student resources module
             //eachLimit helps avoid overloading the server
             asyncLib.eachLimit(module_items, 2, (module_item, eachLimitCallback) => {
-                if (srArr.includes(module_item.title)) {
+                if (topics.includes(module_item.title)) {
                     canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
                             'module_item': {
                                 'module_id': student_resources_id,
