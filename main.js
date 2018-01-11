@@ -120,7 +120,7 @@ module.exports = (course, stepCallback) => {
     function moveContents(course, functionCallback) {
         //move everything to student resources folder
         //https://canvas.instructure.com/doc/api/modules.html#method.context_module_items_api.update
-		var srArr = [
+        var srArr = [
 			'University Policies',
 			'Online Support Center',
 			'Library Research Guides',
@@ -137,43 +137,45 @@ module.exports = (course, stepCallback) => {
             }
 
             //for each item in the welcome module, move it to the student resources module
-			//eachLimit helps avoid overloading the server
-            asyncLib.eachLimit(module_items, 3, (module_item, eachLimitCallback) => {
+            //eachLimit helps avoid overloading the server
+            asyncLib.eachLimit(module_items, 2, (module_item, eachLimitCallback) => {
                 if (srArr.includes(module_item.title)) {
-					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
-						'module_item': {
-							'module_id': student_resources_id,
-							'indent': 1
-						}
-					},
-					(putErr, results) => {
-						if (putErr) {
-							eachLimitCallback(putErr);
-							return;
-						}
-						course.success(`disperse-welcome-folder`,
-							`Successfully moved ${results.title} into the Student Resources module`);
-						eachLimitCallback(null, course);
-					});
-			    //ensuring that the links in the array are not underneath Standard Resources text title by setting position to 1
-				} else {
-					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
-						'module_item': {
-							'module_id': student_resources_id,
-							'indent': 1,
-							'position': 1
-						}
-					},
-					(putErr, results) => {
-						if (putErr) {
-							eachLimitCallback(putErr);
-							return;
-						}
-						course.success(`disperse-welcome-folder`,
-							`Successfully moved ${results.title} into the Student Resources module`);
-						eachLimitCallback(null, course);
-					});
-    			}
+                    canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
+                            'module_item': {
+                                'module_id': student_resources_id,
+                                'indent': 1,
+                                'new_tab': true,
+                            }
+                        },
+                        (putErr, results) => {
+                            if (putErr) {
+                                eachLimitCallback(putErr);
+                                return;
+                            }
+                            course.success(`disperse-welcome-folder`,
+                                `Successfully moved ${results.title} into the Student Resources module`);
+                            eachLimitCallback(null, course);
+                        });
+                    //ensuring that the links in the array are not underneath Standard Resources text title by setting position to 1
+                } else {
+                    canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
+                            'module_item': {
+                                'module_id': student_resources_id,
+                                'indent': 1,
+                                'position': 1,
+                                'new_tab': true,
+                            }
+                        },
+                        (putErr, results) => {
+                            if (putErr) {
+                                eachLimitCallback(putErr);
+                                return;
+                            }
+                            course.success(`disperse-welcome-folder`,
+                                `Successfully moved ${results.title} into the Student Resources module`);
+                            eachLimitCallback(null, course);
+                        });
+                }
             }, (err) => {
                 if (err) {
                     functionCallback(err);
@@ -184,7 +186,7 @@ module.exports = (course, stepCallback) => {
         });
     }
 
-	/**********************************************
+    /**********************************************
      * deleteWelcomeModule()
      * Parameters: course object, functionCallback
      **********************************************/
@@ -200,14 +202,14 @@ module.exports = (course, stepCallback) => {
         });
     }
 
-	/**********************************************
+    /**********************************************
      * moveStudentResourcesModule()
      * Parameters: course object, moveCallback
      **********************************************/
     function moveStudentResourcesModule(course, moveCallback) {
         canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${student_resources_id}`, {
                 'module': {
-					//add one to account for the added syllabus module
+                    //add one to account for the added syllabus module
                     'position': modules_length + 1
                 }
             },
@@ -249,7 +251,7 @@ module.exports = (course, stepCallback) => {
     /* Create the module report so that we can access it later as needed.
     This MUST be done at the beginning of each child module. */
     course.addModuleReport('disperse-welcome-folder');
-    
+
     /********************************
      *          STARTS HERE         *
      ********************************/
