@@ -137,49 +137,43 @@ module.exports = (course, stepCallback) => {
             }
 
             //for each item in the welcome module, move it to the student resources module
-			//setTimeout helps avoid the status code 500 error
-            asyncLib.each(module_items, (module_item, eachCallback) => {
-				if (srArr.includes(module_item.title)) {
-					setTimeout(() => {
-						canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
-								'module_item': {
-									'module_id': student_resources_id,
-									'indent': 1
-								}
-							},
-							(putErr, results) => {
-								if (putErr) {
-									console.log(`The Problem is here`);
-									eachCallback(putErr);
-									return;
-								}
-								course.success(`disperse-welcome-folder`,
-									`Successfully moved ${results.title} into the Student Resources module`);
-								eachCallback(null, course);
-							});
-					}, 5000);
-				//ensuring that the links in the array are not underneath Standard Resources text title by setting position to 1
+			//eachLimit helps avoid overloading the server
+            asyncLib.eachLimit(module_items, 3, (module_item, eachLimitCallback) => {
+                if (srArr.includes(module_item.title)) {
+					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
+						'module_item': {
+							'module_id': student_resources_id,
+							'indent': 1
+						}
+					},
+					(putErr, results) => {
+						if (putErr) {
+							eachLimitCallback(putErr);
+							return;
+						}
+						course.success(`disperse-welcome-folder`,
+							`Successfully moved ${results.title} into the Student Resources module`);
+						eachLimitCallback(null, course);
+					});
+			    //ensuring that the links in the array are not underneath Standard Resources text title by setting position to 1
 				} else {
-					setTimeout(() => {
-						canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
-								'module_item': {
-									'module_id': student_resources_id,
-									'indent': 1,
-									'position': 1
-								}
-							},
-							(putErr, results) => {
-								if (putErr) {
-									console.log(`Actually, it's here...`);
-									eachCallback(putErr);
-									return;
-								}
-								course.success(`disperse-welcome-folder`,
-									`Successfully moved ${results.title} into the Student Resources module`);
-								eachCallback(null, course);
-							});
-					}, 2000);
-				}
+					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcome_module_id}/items/${module_item.id}`, {
+						'module_item': {
+							'module_id': student_resources_id,
+							'indent': 1,
+							'position': 1
+						}
+					},
+					(putErr, results) => {
+						if (putErr) {
+							eachLimitCallback(putErr);
+							return;
+						}
+						course.success(`disperse-welcome-folder`,
+							`Successfully moved ${results.title} into the Student Resources module`);
+						eachLimitCallback(null, course);
+					});
+    			}
             }, (err) => {
                 if (err) {
                     functionCallback(err);
@@ -250,13 +244,12 @@ module.exports = (course, stepCallback) => {
                 functionCallback(null, course);
             }
         });
-
     }
 
     /* Create the module report so that we can access it later as needed.
     This MUST be done at the beginning of each child module. */
     course.addModuleReport('disperse-welcome-folder');
-	setTimeout(() => {
+    
     /********************************
      *          STARTS HERE         *
      ********************************/
@@ -315,5 +308,4 @@ module.exports = (course, stepCallback) => {
             }
         }
     });
-}, 7000);
 }
