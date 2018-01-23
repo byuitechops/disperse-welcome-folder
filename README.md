@@ -1,6 +1,17 @@
 # disperse-welcome-folder
-Disperse the "Welcome" folder's contents from Brightspace into the Instructor Resources and Lesson 01 folders in Canvas 
 
-Moves all content out of the Welcome folder into the Student Resources folder (or other locations, if appropriate), then removes the Welcome folder. "How to Understand Due Dates" will be deleted. Creates "Standard Resources" and "Course Specific" headers inside of Student Resources, and moves content into each of those two sections.
+This is a child module for the Course Conversion Tool at Brigham Young University - Idaho. The main
+purpose of this child module is to move the contents out of the Welcome module into the Student Resources
+module. Once the Welcome module is empty, it is then deleted from the course.
 
-Potentially will add "Standard Resources" and "Course Specific" headers to Student Resources.
+## Pre-Import or Post-Import
+This child module occurs *post-import* from Brightspace D2L to Canvas.
+
+## Additional Information
+* "How to Understand Due Dates" gets deleted during execution.
+* "Standard Resources" and "Course Specific" headers are created inside the Student Resources module.
+* The Student Resources are modeled after the OCT course on Canvas.
+
+## Authors
+* Seth Childers
+* Sam McGrath
