@@ -273,9 +273,6 @@ module.exports = (course, stepCallback) => {
         });
     }
 
-    /* Create the module report so that we can access it later as needed.
-    This MUST be done at the beginning of each child module. */
-    course.addModuleReport('disperse-welcome-folder');
 
     /********************************
      *          STARTS HERE         *
@@ -292,21 +289,23 @@ module.exports = (course, stepCallback) => {
 
             modules_length = manifest.dom('organization>item').length;
 
-            course.success(`disperse-welcome-folder`, `Successfully retrieved ${modules_length} modules.`);
+            course.message(`There are ${modules_length} in the manifest.`);
+            course.success(`disperse-welcome-folder`, `Successfully retrieved ${module_list.length} modules.`);
 
             //loop through list of modules and get the IDs
             module_list.forEach(module => {
-                if (module.name == `Welcome`) {
+                console.log(`Module name: ${module.name}`);
+                if (module.name === `Welcome`) {
                     welcome_module_id = module.id;
                     course.success(`disperse-welcome-folder`, `Welcome module ID: ${welcome_module_id}`);
-                } else if (module.name == `Student Resources`) {
+                } else if (module.name === `Student Resources`) {
                     student_resources_id = module.id;
                     course.success(`disperse-welcome-folder`, `Student Resources module ID: ${student_resources_id}`);
                 }
             });
 
             //end program if welcome_module_id == -1
-            if (welcome_module_id <= -1) {
+            if (welcome_module_id <= -1 || welcome_module_id === undefined) {
                 //move on to the next child module
                 course.throwWarning('disperse-welcome-folder', 'Welcome folder doesn\'t exist. Moving on...');
                 stepCallback(null, course);
