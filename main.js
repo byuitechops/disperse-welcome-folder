@@ -72,6 +72,31 @@ module.exports = (course, stepCallback) => {
     }
 
     /**********************************************
+     * createSRHeader()
+     * Parameters: functionCallback
+     **********************************************/
+    function createSupplementalHeader(course, functionCallback) {
+        //create Supplemental Resources text header
+        canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules/${student_resources_id}/items`, {
+                'module_item': {
+                    'title': 'Supplemental Resources',
+                    'type': 'SubHeader',
+                    'position': 1
+                }
+            },
+            (postErr, results) => {
+                if (postErr) {
+                    // move err handling to callback
+                    functionCallback(postErr);
+                    return;
+                } else {
+                    course.success(`disperse-welcome-folder`, `Successfully created Supplemental Resources text header`);
+                    functionCallback(null, course);
+                }
+            });
+    }
+
+    /**********************************************
      * deletePages()
      * Parameters: functionCallback
      **********************************************/
@@ -235,6 +260,7 @@ module.exports = (course, stepCallback) => {
 				deletePages,
 				moveContents,
 				deleteWelcomeModule,
+                createSupplementalHeader,
                 moveStudentResourcesModule
 		];
         asyncLib.waterfall(myFunctions, (waterfallErr, result) => {
