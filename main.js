@@ -289,7 +289,6 @@ module.exports = (course, stepCallback) => {
 
             //loop through list of modules and get the IDs
             module_list.forEach(module => {
-                console.log(`Module name: ${module.name}`);
                 if (module.name === `Welcome`) {
                     welcome_module_id = module.id;
                     course.message(`Welcome module ID: ${welcome_module_id}`);
