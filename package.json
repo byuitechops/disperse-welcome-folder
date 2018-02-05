@@ -1,29 +1,29 @@
 {
-    "name": "disperse-welcome-folder",
-    "version": "1.0.0",
-    "description": "Move contents into the Student Resources module then deletes the empty Welcome module",
-    "main": "main.js",
-    "dependencies": {
-        "canvas-wrapper": "git+https://github.com/byuitechops/Canvas-wrapper.git"
-    },
-    "devDependencies": {
-        "async": "^2.6.0",
-        "child-development-kit": "github:byuitechops/child-development-kit",
-        "tap": "^10.7.3"
-    },
-    "scripts": {
-        "start": "node ./node_modules/child-development-kit/runChild.js",
-        "test": "tap ./node_modules/child-development-kit/testChild.js -T"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/byuitechops/disperse-welcome-folder.git"
-    },
-    "author": "Seth Childers, Sam McGrath",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/byuitechops/disperse-welcome-folder/issues"
-    },
-    "homepage": "https://github.com/byuitechops/disperse-welcome-folder#readme",
-    "childType": "postImport"
+	"name": "disperse-welcome-folder",
+	"version": "1.0.0",
+	"description": "The main purpose of this child module is to move the contents out of the Welcome module into the Student Resources module. Once the Welcome module is empty, it is then deleted from the course.",
+	"main": "main.js",
+	"dependencies": {
+		"canvas-wrapper": "git+https://github.com/byuitechops/Canvas-wrapper.git"
+	},
+	"devDependencies": {
+		"async": "^2.6.0",
+		"child-development-kit": "github:byuitechops/child-development-kit",
+		"tap": "^10.7.3"
+	},
+	"scripts": {
+		"start": "node ./node_modules/child-development-kit/runChild.js",
+		"test": "tap ./node_modules/child-development-kit/testChild.js -T"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/byuitechops/disperse-welcome-folder.git"
+	},
+	"author": "Seth Childers, Sam McGrath",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/byuitechops/disperse-welcome-folder/issues"
+	},
+	"homepage": "https://github.com/byuitechops/disperse-welcome-folder#readme",
+	"childType": "postImport"
 }
