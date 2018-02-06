@@ -274,23 +274,15 @@ module.exports = (course, stepCallback) => {
 	 *          STARTS HERE         *
 	 ********************************/
 	//Get module IDs since the course object does not come with a list of modules
-	canvas.get(`/api/v1/courses/${course.info.canvasOU}/modules`, (getErr, moduleList) => {
-		var manifest;
+	canvas.getModules(course.info.canvasOU, (getErr, moduleList) => {
 		if (getErr) {
 			course.error(getErr);
 			return;
 		} else {
+			modulesLength = moduleList.length;
+			course.message(`Successfully retrieved ${modulesLength} modules.`);
 
-			manifest = course.content.find(file => {
-				return file.name == 'imsmanifest.xml';
-			});
-
-			modulesLength = manifest.dom('organization>item').length;
-
-			course.message(`There are ${modulesLength} in the manifest.`);
-			course.message(`Successfully retrieved ${moduleList.length} modules.`);
-
-			//loop through list of modules and get the IDs
+			//loop through list of modules set welcomeModuleId and studentResourcesId
 			moduleList.forEach(module => {
 				if (module.name === `Welcome`) {
 					welcomeModuleId = module.id;
@@ -304,7 +296,7 @@ module.exports = (course, stepCallback) => {
 			//end program if welcomeModuleId == -1
 			if (welcomeModuleId <= -1 || welcomeModuleId === undefined) {
 				//move on to the next child module
-				course.warning('Welcome folder doesn\'t exist. Moving on...');
+				course.warning('Welcome folder doesn\'t exist. Moving to the next child module');
 				stepCallback(null, course);
 			} else {
 				//check to see if Student Resources module exists. if not, call a function to create one
@@ -325,8 +317,34 @@ module.exports = (course, stepCallback) => {
 							}
 							course.message('disperse-welcome-folder successfully completed.');
 							stepCallback(null, course);
+							return;
 						});
 					});
+				} else {
+					canvas.getModuleItems(course.info.canvasOU, studentResourcesId, (getModuleItemsErr, moduleItems) => {
+						if (getModuleItemsErr) {
+							course.error(getModuleItemsErr);
+							stepCallback(null, course);
+							return;
+						}
+						if (moduleItems.length <= 0 || moduleItems == undefined) {
+							course.message(`Student Resources module is empty`)
+							welcomeFolder(course, (welcomeErr, course) => {
+								if (welcomeErr) {
+									//err handling here
+									course.error(welcomeErr);
+									stepCallback(null, course);
+									return;
+								}
+								course.message('disperse-welcome-folder successfully completed.');
+								stepCallback(null, course);
+								return;
+							});
+						}
+						course.message(`Student Resources module already existed`);
+						stepCallback(null, course);
+					});
+
 				}
 			}
 		}
