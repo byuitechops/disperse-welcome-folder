@@ -97,9 +97,9 @@ module.exports = (course, stepCallback) => {
 	 **********************************************/
 	function deletePages(functionCallback) {
 		var pagesToDelete = [
-            //singular 'Date' instead of 'Dates' in case of misspelling. Check using '.includes()'
-            'How to Understand Due Date'
-        ];
+			//singular 'Date' instead of 'Dates' in case of misspelling. Check using '.includes()'
+			'How to Understand Due Date'
+		];
 		//delete "How to Understand Due Dates" if it exists
 		canvas.get(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items`, (getErr, moduleItems) => {
 			if (getErr) {
@@ -140,13 +140,13 @@ module.exports = (course, stepCallback) => {
 		//move everything to the 'Student Resources' folder
 
 		var topics = [
-            'University Policies',
-            'Online Support Center',
-            'Library Research Guides',
-            'Academic Support Center',
-            'Copyright & Source Information',
-            'Copyright and Source Information'
-        ];
+			'University Policies',
+			'Online Support Center',
+			'Library Research Guides',
+			'Academic Support Center',
+			'Copyright & Source Information',
+			'Copyright and Source Information'
+		];
 
 		//get the welcome module contents
 		canvas.get(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items`, (getErr, moduleItems) => {
@@ -252,13 +252,13 @@ module.exports = (course, stepCallback) => {
 	function welcomeFolder(course, functionCallback) {
 		//do async.waterfall here to run each of the functions
 		var myFunctions = [
-            createSRHeader,
-            deletePages,
-            moveContents,
-            deleteWelcomeModule,
-            createSupplementalHeader,
-            moveStudentResourcesModule
-        ];
+			createSRHeader,
+			deletePages,
+			moveContents,
+			deleteWelcomeModule,
+			createSupplementalHeader,
+			moveStudentResourcesModule
+		];
 		asyncLib.waterfall(myFunctions, (waterfallErr, result) => {
 			if (waterfallErr) {
 				functionCallback(waterfallErr, course);
