@@ -10,6 +10,7 @@ const asyncLib = require('async');
 //ids for modules
 var welcomeModuleId = -1;
 var studentResourcesId = -1;
+var resourcesId = -1;
 var modulesLength = -1;
 
 module.exports = (course, stepCallback) => {
@@ -290,11 +291,14 @@ module.exports = (course, stepCallback) => {
 				} else if (module.name === `Student Resources`) {
 					studentResourcesId = module.id;
 					course.message(`Student Resources module ID: ${studentResourcesId}`);
-				}
+				} else if (module.name === `Resources`) {
+                    resourcesId = module.id;
+                    course.message(`Resources module ID: ${resourcesId}`);
+                }
 			});
 
 			//end program if welcomeModuleId == -1
-			if (welcomeModuleId <= -1 || welcomeModuleId === undefined) {
+			if ((welcomeModuleId <= -1 || welcomeModuleId === undefined) && (resourcesId <= -1 || resourcesId === undefined)) {
 				//move on to the next child module
 				course.warning('Welcome folder doesn\'t exist. Moving to the next child module');
 				stepCallback(null, course);
@@ -320,7 +324,8 @@ module.exports = (course, stepCallback) => {
 							return;
 						});
 					});
-				} else {
+                    //if a resources module exists, move its contents into student resources and delete it
+				} if (resourcesId != -1) {
 					canvas.getModuleItems(course.info.canvasOU, studentResourcesId, (getModuleItemsErr, moduleItems) => {
 						if (getModuleItemsErr) {
 							course.error(getModuleItemsErr);
