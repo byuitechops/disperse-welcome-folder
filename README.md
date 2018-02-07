@@ -1,8 +1,10 @@
 # Disperse Welcome Folder
-### Package Name: disperse-welcome-folder
-### Child Type: post import
+### *Package Name*: disperse-welcome-folder
+### *Child Type*: post import
+### *Platform*: online
+### *Required*: Recommended
 
-This child module is built to be used by the Brigham Young University - Idaho D2L to Canvas Conversion Tool. It utilizes the standard `module.exports => (course, stepCallback)` signature and uses the Conversion Tool's standard logging functions.
+This child module is built to be used by the Brigham Young University - Idaho D2L to Canvas Conversion Tool. It utilizes the standard `module.exports => (course, stepCallback)` signature and uses the Conversion Tool's standard logging functions. You can view extended documentation [Here](https://github.com/byuitechops/d2l-to-canvas-conversion-tool/tree/master/documentation).
 
 ## Purpose
 
@@ -12,10 +14,25 @@ The main purpose of this child module is to move the contents out of the Welcome
 * "Standard Resources" and "Course Specific" headers are created inside the Student Resources module.
 * The Student Resources are modeled after the OCT course on Canvas.
 
+## How to Install
+
+```
+npm install disperse-welcome-folder
+```
+
+## Run Requirements
+
+None
+
+## Options
+
+None
+
+## Outputs
+
+None
 
 ## Process
-
-Describe in steps how the module accomplishes its goals.
 
 1. Get the module list and check if there is a 'Welcome' module:
 	- If there is a 'Welcome' module, continue with the child module
@@ -30,7 +47,14 @@ Describe in steps how the module accomplishes its goals.
 7. Delete the 'Welcome' module
 8. Move the 'Student Resources' module to be the last module
 
+## Log Categories
 
-## Authors
-* Seth Childers
-* Sam McGrath
+None currently. Rewriting the child module currently and will document logs here as the child module is written.
+
+## Requirements
+
+1. Create a Student Resources module
+2. Disperse the contents of the Welome folder into the Student Resources module
+3. If there is a Resources module, disperse its contents into the Student Resources module
+4. Delete the Welcome folder
+5. Delete the Resources module
