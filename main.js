@@ -19,9 +19,9 @@ module.exports = (course, stepCallback) => {
 
 	/**********************************************
 	 * makeStudentResourcesModule()
-	 * Parameters: course object, functionCallback
+	 * Parameters: functionCallback
 	 **********************************************/
-	function makeStudentResourcesModule(course, functionCallback) {
+	function makeStudentResourcesModule(functionCallback) {
 		//create the module
 		canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules`, {
 				'module': {
@@ -31,13 +31,13 @@ module.exports = (course, stepCallback) => {
 			(postErr, module) => {
 				if (postErr) {
 					// handle errs in the functionCallback
-					functionCallback(postErr, course);
+					functionCallback(postErr);
 					return;
 				} else {
 					course.message(`Successfully created Student Resources module. SR ID: ${module.id}`);
 					//the update module call in the canvas api requires the endpoint module id
 					studentResourcesId = module.id;
-					functionCallback(null, course);
+					functionCallback(null);
 				}
 			});
 	}
@@ -70,7 +70,7 @@ module.exports = (course, stepCallback) => {
 	 * createSRHeader()
 	 * Parameters: functionCallback
 	 **********************************************/
-	function createSupplementalHeader(course, functionCallback) {
+	function createSupplementalHeader(functionCallback) {
 		//create 'Supplemental Resources' text header
 		canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules/${studentResourcesId}/items`, {
 				'module_item': {
@@ -86,7 +86,7 @@ module.exports = (course, stepCallback) => {
 					return;
 				} else {
 					course.message('Successfully created Supplemental Resources text header');
-					functionCallback(null, course);
+					functionCallback(null);
 				}
 			});
 	}
@@ -126,7 +126,7 @@ module.exports = (course, stepCallback) => {
 				if (err) {
 					functionCallback(err);
 				} else {
-					functionCallback(null, course);
+					functionCallback(null);
 				}
 			});
 		});
@@ -134,12 +134,11 @@ module.exports = (course, stepCallback) => {
 
 	/**********************************************
 	 * moveContents()
-	 * Parameters: course object, functionCallback
+	 * Parameters: functionCallback
 	 **********************************************/
-	function moveContents(course, functionCallback) {
+	function moveContents(functionCallback) {
 		//move everything to the 'Student Resources' folder
-
-		var topics = [
+		var order = [
 			'University Policies',
 			'Online Support Center',
 			'Library Research Guides',
@@ -148,6 +147,8 @@ module.exports = (course, stepCallback) => {
 			'Copyright and Source Information'
 		];
 
+		var arrayOrders = [];
+
 		//get the welcome module contents
 		canvas.get(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items`, (getErr, moduleItems) => {
 			if (getErr) {
@@ -155,77 +156,120 @@ module.exports = (course, stepCallback) => {
 				return;
 			}
 
-			//for each item in the welcome module, move it to the student resources module
-			//eachSeries helps avoid overloading the server
-			asyncLib.eachSeries(moduleItems, (moduleItem, eachLimitCallback) => {
-				if (topics.includes(moduleItem.title)) {
-					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items/${moduleItem.id}`, {
-							'module_item': {
-								'module_id': studentResourcesId,
-								'indent': 1,
-								'new_tab': true,
-								'published': true
-							}
-						},
-						(putErr, results) => {
-							if (putErr) {
-								eachLimitCallback(putErr);
-								return;
-							}
-							course.message(`Successfully moved ${results.title} into the Student Resources module`);
-							eachLimitCallback(null, course);
-						});
-					//ensuring that the links in the array are not underneath Standard Resources text title by setting position to 1
-				} else {
-					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items/${moduleItem.id}`, {
-							'module_item': {
-								'module_id': studentResourcesId,
-								'indent': 1,
-								'position': 1,
-								'new_tab': true,
-								'published': true
-							}
-						},
-						(putErr, results) => {
-							if (putErr) {
-								eachLimitCallback(putErr);
-								return;
-							}
-							course.message(`Successfully moved ${results.title} into the Student Resources module`);
-							eachLimitCallback(null, course);
-						});
+			var functions = [
+				asyncLib.apply(moveSuppResourcesContents, order, moduleItems, arrayOrders),
+				moveStandardResourcesContents
+			];
+
+			for (var i = 0; i < order.length; i++) {
+				for (var x = 0; x < moduleItems.length; x++) {
+					if (order[i] === moduleItems[x].title) {
+						arrayOrders.push(moduleItems[x].id);
+						break;
+					}
 				}
-			}, (err) => {
-				if (err) {
-					functionCallback(err);
+			}
+
+			asyncLib.waterfall(functions, (waterfallErr) => {
+				if (waterfallErr) {
+					functionCallback(waterfallErr);
+					return;
+				} else {
+					functionCallback(null);
 					return;
 				}
-				functionCallback(null, course);
 			});
+		});
+	}
+
+	function moveSuppResourcesContents(order, moduleItems, arrayOrders, functionCallback) {
+		var count = 0;
+
+		//for each item in the welcome module, move it to the student resources module
+		//eachSeries helps avoid overloading the server
+		asyncLib.eachSeries(moduleItems, (moduleItem, eachSeriesCallback) => {
+			//ensuring that the links in the array are not underneath Standard Resources text title by setting position to 1
+			if (!order.includes(moduleItem.title)) {
+				canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items/${moduleItem.id}`, {
+					'module_item': {
+						'module_id': studentResourcesId,
+						'indent': 1,
+						'position': 1,
+						'new_tab': true,
+						'published': true
+					}
+				}, (putErr, results) => {
+						if (putErr) {
+							eachSeriesCallback(putErr);
+						}
+						count++;
+						course.message(`Successfully moved ${results.title} into the Student Resources module`);
+						eachSeriesCallback(null);
+					});
+			} else {
+				eachSeriesCallback(null);
+			}
+		}, (err) => {
+			if (err) {
+				functionCallback(err);
+				return;
+			} else {
+				functionCallback(null, arrayOrders, count);
+				return;
+			}
+		});
+	}
+
+	function moveStandardResourcesContents(arrayOrders, count, functionCallback) {
+		asyncLib.eachOfSeries(arrayOrders, (arrayOrder, key, eachOfSeriesCallback) => {
+			canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items/${arrayOrder}`, {
+				'module_item': {
+					'module_id': studentResourcesId,
+					'indent': 1,
+					'position': key + count + 1,
+					'new_tab': true,
+					'published': true
+				}
+			}, (putErr, results) => {
+				if (putErr) {
+					eachOfSeriesCallback(putErr);
+				} else {
+					course.message(`Successfully moved ${results.title} into the Student Resources module`);
+					eachOfSeriesCallback(null);
+				}
+			});
+		}, (err) => {
+			if (err) {
+				functionCallback(err);
+				return;
+			} else {
+				functionCallback(null);
+				return;
+			}
 		});
 	}
 
 	/**********************************************
 	 * deleteWelcomeModule()
-	 * Parameters: course object, functionCallback
+	 * Parameters: functionCallback
 	 **********************************************/
-	function deleteWelcomeModule(course, functionCallback) {
+	function deleteWelcomeModule(functionCallback) {
 		canvas.delete(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}`, (deleteErr, results) => {
 			if (deleteErr) {
 				functionCallback(deleteErr);
 				return;
 			} else {
 				course.message('Successfully deleted the welcome folder');
-				functionCallback(null, course);
+				functionCallback(null);
 			}
 		});
 	}
 
 	/**********************************************
 	 * moveStudentResourcesModule()
-	 * Parameters: course object, moveCallback
+	 * Parameters: moveCallback
 	 **********************************************/
-	function moveStudentResourcesModule(course, moveCallback) {
+	function moveStudentResourcesModule(moveCallback) {
 		// move 'Student Resources' to be the last module
 		canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${studentResourcesId}`, {
 				'module': {
@@ -240,16 +284,16 @@ module.exports = (course, stepCallback) => {
 					return;
 				} else {
 					course.message('Successfully made Student Resources the last module');
-					moveCallback(null, course);
+					moveCallback(null);
 				}
 			});
 	}
 
 	/*************************************************
 	 * welcomeFolder()
-	 * Parameters: Course object, functionCallback
+	 * Parameters: functionCallback
 	 *************************************************/
-	function welcomeFolder(course, functionCallback) {
+	function welcomeFolder(functionCallback) {
 		//do async.waterfall here to run each of the functions
 		var myFunctions = [
 			createSRHeader,
@@ -261,10 +305,10 @@ module.exports = (course, stepCallback) => {
 		];
 		asyncLib.waterfall(myFunctions, (waterfallErr, result) => {
 			if (waterfallErr) {
-				functionCallback(waterfallErr, course);
+				functionCallback(waterfallErr);
 				return;
 			} else {
-				functionCallback(null, course);
+				functionCallback(null);
 			}
 		});
 	}
@@ -309,14 +353,14 @@ module.exports = (course, stepCallback) => {
 			} else {
 				//check to see if Student Resources module exists. if not, call a function to create one
 				if (studentResourcesId <= -1) {
-					makeStudentResourcesModule(course, (postErr, course) => {
+					makeStudentResourcesModule((postErr) => {
 						if (postErr) {
 							course.error(postErr);
 							stepCallback(null, course);
 							return;
 						}
 						//call function to move welcome folder contents to student resources modules
-						welcomeFolder(course, (welcomeErr, course) => {
+						welcomeFolder((welcomeErr) => {
 							if (welcomeErr) {
 								//err handling here
 								course.error(welcomeErr);
