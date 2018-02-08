@@ -46,12 +46,13 @@ module.exports = (course, stepCallback) => {
 	 * createSRHeader()
 	 * Parameters: functionCallback
 	 **********************************************/
-	function createSRHeader(functionCallback) {
+	function createSRHeader(supplementalLength, functionCallback) {
 		//create 'Standard Resources' text header
 		canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules/${studentResourcesId}/items`, {
 				'module_item': {
 					'title': 'Standard Resources',
-					'type': 'SubHeader'
+					'type': 'SubHeader',
+					'position': supplementalLength + 1 //position is 1-based
 				}
 			},
 			(postErr, results) => {
@@ -67,7 +68,7 @@ module.exports = (course, stepCallback) => {
 	}
 
 	/**********************************************
-	 * createSRHeader()
+	 * createSupplementalHeader()
 	 * Parameters: functionCallback
 	 **********************************************/
 	function createSupplementalHeader(functionCallback) {
@@ -141,7 +142,7 @@ module.exports = (course, stepCallback) => {
 		var order = [
 			'University Policies',
 			'Online Support Center',
-			'Library Research Guides',
+			'Library Research Guide',
 			'Academic Support Center',
 			'Copyright & Source Information',
 			'Copyright and Source Information'
@@ -170,12 +171,12 @@ module.exports = (course, stepCallback) => {
 				}
 			}
 
-			asyncLib.waterfall(functions, (waterfallErr) => {
+			asyncLib.waterfall(functions, (waterfallErr, supplementalLength) => {
 				if (waterfallErr) {
 					functionCallback(waterfallErr);
 					return;
 				} else {
-					functionCallback(null);
+					functionCallback(null, supplementalLength);
 					return;
 				}
 			});
@@ -243,7 +244,7 @@ module.exports = (course, stepCallback) => {
 				functionCallback(err);
 				return;
 			} else {
-				functionCallback(null);
+				functionCallback(null, count);
 				return;
 			}
 		});
@@ -296,11 +297,11 @@ module.exports = (course, stepCallback) => {
 	function welcomeFolder(functionCallback) {
 		//do async.waterfall here to run each of the functions
 		var myFunctions = [
-			createSRHeader,
 			deletePages,
 			moveContents,
-			deleteWelcomeModule,
+			createSRHeader,
 			createSupplementalHeader,
+			deleteWelcomeModule,
 			moveStudentResourcesModule
 		];
 		asyncLib.waterfall(myFunctions, (waterfallErr, result) => {
