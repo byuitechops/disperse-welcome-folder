@@ -40,13 +40,16 @@ module.exports = (course, stepCallback) => {
 						resourcesId = module.id;
 						course.message(`Resources module ID: ${resourcesId}`);
 					}
+
 					//call the next iteration of asyncLib.each()
 					eachCallback(null);
+
 				}, (eachErr) => {
 					if (eachErr) {
 						getModulesIdsCallback(eachErr);
 						return;
 					}
+
 					//end program if there is no welcome module and no resources module
 					if ((welcomeModuleId <= -1 || welcomeModuleId === undefined) && (resourcesId <= -1 || resourcesId === undefined)) {
 						//move on to the next child module
@@ -144,11 +147,11 @@ module.exports = (course, stepCallback) => {
 
 	/**********************************************
 	 * moveResourcesContent()
-	 * Parameters: moveResourcesContentCallback
+	 * Parameters: resourcesModuleItems, moveResourcesContentCallback
 	 **********************************************/
-	function moveResourcesContent(moduleItems, moveResourcesContentCallback) {
+	function moveResourcesContent(resourcesModuleItems, moveResourcesContentCallback) {
 		//if there is no resources module, or if it exists but is empty, move to the next function
-		if (resourcesId <= -1 || resourcesId === undefined || moduleItems.length <= 0 || moduleItems === undefined) {
+		if (resourcesId <= -1 || resourcesId === undefined || resourcesModuleItems.length <= 0 || resourcesModuleItems === undefined) {
 			course.message(`The Resources module either doesn't exist, or is empty. No need to move its contents`);
 			moveResourcesContentCallback(null);
 			return;
@@ -160,6 +163,7 @@ module.exports = (course, stepCallback) => {
 				moveResourcesContentCallback(getErr);
 				return;
 			}
+
 			//for each item in the welcome module, move it to the student resources module
 			//eachSeries helps avoid overloading the server
 			asyncLib.eachSeries(moduleItems, (moduleItem, eachLimitCallback) => {
@@ -167,6 +171,7 @@ module.exports = (course, stepCallback) => {
 						'module_item': {
 							'module_id': studentResourcesId,
 							'indent': 1,
+							'position': 1,
 							'new_tab': true,
 							'published': true
 						}
@@ -194,16 +199,18 @@ module.exports = (course, stepCallback) => {
 	 * Parameters: deletePagesCallback
 	 **********************************************/
 	function deletePages(deletePagesCallback) {
-		//if no welcome module exists, move on
+		//if no welcome module exists, move to the next function
 		if (welcomeModuleId <= -1 || welcomeModuleId === undefined) {
 			deletePagesCallback(null);
 			return;
 		}
+
 		//an array of pages to delete in array form in case we want to add more pages to it later
 		var pagesToDelete = [
 			//singular 'Date' instead of 'Dates' in case of misspelling. Check using '.includes()'
 			'How to Understand Due Date'
 			];
+
 		//delete "How to Understand Due Dates" if it exists
 		canvas.getModuleItems(course.info.canvasOU, welcomeModuleId, (getErr, moduleItems) => {
 			if (getErr) {
@@ -211,6 +218,7 @@ module.exports = (course, stepCallback) => {
 				deletePagesCallback(getErr);
 				return;
 			}
+
 			course.message(`Successfully retrieved ${moduleItems.length} module items in Welcome Module`);
 			asyncLib.each(moduleItems, (topic, eachCallback) => {
 				//Standard Naming Scheme: How to Understand Due Dates
@@ -243,22 +251,22 @@ module.exports = (course, stepCallback) => {
 	function moveWelcomeContent(moveWelcomeContentCallback) {
 		//move everything to the 'Student Resources' folder
 
-		//if no welcome module exists, move on
+		//if no welcome module exists, move to the next function
 		if (welcomeModuleId <= -1 || welcomeModuleId === undefined) {
 			moveWelcomeContentCallback(null);
 			return;
 		}
 
-		var topics = [
+		var order = [
 			'University Policies',
 			'Online Support Center',
-			'Library Research Guides',
+			'Library Research Guide',
 			'Academic Support Center',
 			'Copyright & Source Information',
 			'Copyright and Source Information'
 		];
 
-		//get the welcome module's module items
+		//get the module items from the welcome module
 		canvas.getModuleItems(course.info.canvasOU, welcomeModuleId, (getErr, moduleItems) => {
 			if (getErr) {
 				moveWelcomeContentCallback(getErr);
@@ -268,7 +276,8 @@ module.exports = (course, stepCallback) => {
 			//for each item in the welcome module, move it to the student resources module
 			//eachSeries helps avoid overloading the server
 			asyncLib.eachSeries(moduleItems, (moduleItem, eachLimitCallback) => {
-				if (topics.includes(moduleItem.title)) {
+				//check if it belongs in the Standard Resources subHeader. If not, set position to '1' to put under Supplemental Resources subHeader
+				if (order.includes(moduleItem.title)) {
 					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items/${moduleItem.id}`, {
 							'module_item': {
 								'module_id': studentResourcesId,
@@ -285,7 +294,8 @@ module.exports = (course, stepCallback) => {
 							course.message(`Successfully moved ${results.title} into the Student Resources module`);
 							eachLimitCallback(null);
 						});
-					//ensuring that the links in the array are not underneath Standard Resources text title by setting position to 1
+
+					//set position to '1' to put under Supplemental Resources subHeader
 				} else {
 					canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items/${moduleItem.id}`, {
 							'module_item': {
@@ -358,9 +368,8 @@ module.exports = (course, stepCallback) => {
 					'position': 1
 				}
 			},
-			(postErr) => {
+			(postErr, moduleHeader) => {
 				if (postErr) {
-					// move err handling to callback
 					createSupplementalCallback(postErr);
 					return;
 				} else {
@@ -375,11 +384,12 @@ module.exports = (course, stepCallback) => {
 	 * Parameters: moveCallback
 	 **********************************************/
 	function moveStudentResourcesModule(moveCallback) {
-		//if studentResources doesn't exist, move on
+		//if no studentResources module exists, move to the next function
 		if (studentResourcesId <= -1 || studentResourcesId === undefined) {
 			moveCallback(null);
 			return;
 		}
+
 		// move 'Student Resources' to be the last module
 		canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${studentResourcesId}`, {
 				'module': {
@@ -401,9 +411,10 @@ module.exports = (course, stepCallback) => {
 
 	/*************************************************
 	 * welcomeFolder()
-	 * Parameters: welcomeCallback
+	 * Parameters: none
 	 *************************************************/
 	function welcomeFolder() {
+		//the functions to waterfall through
 		var myFunctions = [
 			getModuleIds,
 			makeStudentResourcesModule,
