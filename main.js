@@ -16,11 +16,11 @@ var resourcesId = -1; // a module that could exist, but shouldn't
 var modulesLength = -1;
 
 module.exports = (course, stepCallback) => {
-    /*************************************************
+    /******************************************************************************
      * getModuleIds()
      * Parameters: getModulesIdsCallback
-     * WHAT DOES THIS FUNCTION DO???
-     *************************************************/
+     * Get the list of modules and assign their module id's to the global variables
+     ******************************************************************************/
     function getModuleIds(getModuleIdsCallback) {
         /* get module IDs since the course object does not come with a list of modules */
         canvas.getModules(course.info.canvasOU, (getModulesErr, moduleList) => {
@@ -62,11 +62,11 @@ module.exports = (course, stepCallback) => {
         });
     }
 
-    /**********************************************
+    /*****************************************************************************************
      * makeStudentResourcesModule()
      * Parameters: makeStudentResourcesCallback
-     * WHAT DOES THIS FUNCTION DO???
-     **********************************************/
+     * Create a Student Resources module to put all the welcome/resources folders content into
+     *****************************************************************************************/
     function makeStudentResourcesModule(makeStudentResourcesCallback) {
         /* first check to see if one already exists. If not, studentResourcesId should still be set to -1 or undefined/null */
         if (studentResourcesId !== -1) {
@@ -76,30 +76,30 @@ module.exports = (course, stepCallback) => {
 
         /* create the Student Resources module */
         canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules`, {
-            'module': {
-                'name': 'Student Resources'
-            }
-        },
-        (postErr, module) => {
-            if (postErr) {
-                /* handle errs in the makeStudentResourcesCallback */
-                makeStudentResourcesCallback(postErr);
-                return;
-            } else {
-                course.message(`Successfully created Student Resources module. Id: ${module.id}`);
-                /* the update module call in the canvas api requires the endpoint module id */
-                studentResourcesId = module.id;
-                makeStudentResourcesCallback(null);
-                return;
-            }
-        });
+                'module': {
+                    'name': 'Student Resources'
+                }
+            },
+            (postErr, module) => {
+                if (postErr) {
+                    /* handle errs in the makeStudentResourcesCallback */
+                    makeStudentResourcesCallback(postErr);
+                    return;
+                } else {
+                    course.message(`Successfully created Student Resources module. Id: ${module.id}`);
+                    /* the update module call in the canvas api requires the endpoint module id */
+                    studentResourcesId = module.id;
+                    makeStudentResourcesCallback(null);
+                    return;
+                }
+            });
     }
 
-    /**********************************************
+    /************************************************
      * getResourcesContents()
      * Parameters: getResourcesContentsCallback
-     * WHAT DOES THIS FUNCTION DO???
-     **********************************************/
+     * Get the module items from the resources folder
+     ************************************************/
     function getResourcesContents(getResourcesContentsCallback) {
         /* if there is no resources module, skip this function */
         if (resourcesId === -1 || resourcesId === undefined) {
@@ -117,14 +117,14 @@ module.exports = (course, stepCallback) => {
         });
     }
 
-    /******************************************************************
+    /*******************************************************************
      * moveResourcesContent()
      * Parameters: resourcesModuleItems, moveResourcesContentCallback
-     * WHAT DOES THIS FUNCTION DO???
+     * Move contents from Resources folder to Student Resources module
      *******************************************************************/
     function moveResourcesContent(resourcesModuleItems, moveResourcesContentCallback) {
         /* if there is no resources module, or if it exists but is empty, move to the next function */
-        if (resourcesId !== -1 || resourcesModuleItems == undefined || resourcesModuleItems.length === 0) {
+        if (resourcesId === -1 || resourcesModuleItems == undefined || resourcesModuleItems.length === 0) {
             course.message('The Resources module either doesn\'t exist, or is empty. No need to move its contents');
             moveResourcesContentCallback(null);
             return;
@@ -135,23 +135,23 @@ module.exports = (course, stepCallback) => {
         /* eachSeries helps avoid overloading the server */
         asyncLib.eachLimit(resourcesModuleItems, 5, (moduleItem, eachLimitCallback) => {
             canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${resourcesId}/items/${moduleItem.id}`, {
-                'module_item': {
-                    'module_id': studentResourcesId,
-                    'indent': 1,
-                    'position': 1,
-                    'new_tab': true,
-                    'published': true
-                }
-            },
-            (putErr, item) => {
-                if (putErr) {
-                    course.error(putErr);
-                } else {
-                    course.message(`Successfully moved ${item.title} into the Student Resources module from the Resources module`);
-                }
+                    'module_item': {
+                        'module_id': studentResourcesId,
+                        'indent': 1,
+                        'position': 1,
+                        'new_tab': true,
+                        'published': true
+                    }
+                },
+                (putErr, item) => {
+                    if (putErr) {
+                        course.error(putErr);
+                    } else {
+                        course.message(`Successfully moved ${item.title} into the Student Resources module from the Resources module`);
+                    }
 
-                eachLimitCallback(null);
-            });
+                    eachLimitCallback(null);
+                });
         }, (eachSeriesErr) => {
             if (eachSeriesErr) {
                 moveResourcesContentCallback(eachSeriesErr);
@@ -161,11 +161,13 @@ module.exports = (course, stepCallback) => {
         });
     }
 
-    /**********************************************
+    /**************************************************************************
      * moveWelcomeContent()
      * Parameters: moveWelcomeContentCallback
-     * WHAT DOES THIS FUNCTION DO???
-     **********************************************/
+     * Get module items from the welcome folder, sort the ones that 
+     * belong under standard resources and send them to the next function, 
+     * and move the rest of the content into the Student Resources module 
+     **************************************************************************/
     function moveWelcomeContent(moveWelcomeContentCallback) {
         /* move everything to the 'Student Resources' folder
 		if no welcome module exists, move to the next function */
@@ -193,14 +195,6 @@ module.exports = (course, stepCallback) => {
                 return;
             }
 
-            /* A cleaner way to sort module items by order listed above */
-            /* moduleItems.sort((a, b) => {
-                return order.indexOf(a.title) - order.indexOf(b.title);
-            }).filter((moduleItem) => {
-
-            }); */
-            
-            
             /* build an array that supports the required order found in the OCT course */
             for (var i = 0; i < order.length; i++) {
                 for (var j = 0; j < moduleItems.length; j++) {
@@ -224,7 +218,7 @@ module.exports = (course, stepCallback) => {
                             'indent': 1,
                             'position': 1,
                             'new_tab': true,
-                            'published': true
+                            'published': true,
                         }
                     }, (putErr, results) => {
                         if (putErr) {
@@ -250,45 +244,46 @@ module.exports = (course, stepCallback) => {
         });
     }
 
-    /*****************************************************************
+    /********************************************************************************
      * moveAdditionalWelcomeContents()
-     * Parameters: itemOrders, count, moveAdditionalWelcomeCallback
-     * WHAT DOES THIS FUNCTION DO???
-     *****************************************************************/
-    function moveAdditionalWelcomeContents(sortedIds, count, moveAdditionalWelcomeCallback) {
+     * Parameters: itemOrders, count, moveStandardResourcesCallback
+     * Move contents found in Welcome Folder that belong under the Standard Resources
+     * subheader into Student Resources under the header, in the required order
+     ********************************************************************************/
+    function moveStandardResourcesContent(sortedIds, count, moveStandardResourcesCallback) {
         /* if no welcome module exists, move to the next function */
         if (welcomeModuleId <= -1 || welcomeModuleId === undefined) {
-            moveAdditionalWelcomeCallback(null, null);
+            moveStandardResourcesCallback(null, null);
             return;
         }
 
         asyncLib.eachOfSeries(sortedIds, (id, key, eachOfSeriesCallback) => {
-            /* go through and put every item in itemOrder (the part for required order portion) into the
+            /* go through and put every item in sortedIds (the part for required order portion) into the
 			student resources module at position + 1 */
             canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items/${id}`, {
-                'module_item': {
-                    'module_id': studentResourcesId,
-                    'indent': 1,
-                    'position': key + count + 1, //putting it after the non-required order portion
-                    'new_tab': true,
-                    'published': true
-                }
-            },
-            (putErr, results) => {
-                if (putErr) {
-                    eachOfSeriesCallback(putErr);
-                    return;
-                } else {
-                    course.message(`Successfully moved ${results.title} into the Student Resources module`);
-                    eachOfSeriesCallback(null);
-                }
-            });
+                    'module_item': {
+                        'module_id': studentResourcesId,
+                        'indent': 1,
+                        'position': key + count + 1, //putting it after the non-required order portion
+                        'new_tab': true,
+                        'published': true
+                    }
+                },
+                (putErr, results) => {
+                    if (putErr) {
+                        eachOfSeriesCallback(putErr);
+                        return;
+                    } else {
+                        course.message(`Successfully moved ${results.title} into the Student Resources module`);
+                        eachOfSeriesCallback(null);
+                    }
+                });
         }, (eachOfSeriesErr) => {
             if (eachOfSeriesErr) {
-                moveAdditionalWelcomeCallback(eachOfSeriesErr, null);
+                moveStandardResourcesCallback(eachOfSeriesErr, null);
                 return;
             } else {
-                moveAdditionalWelcomeCallback(null, count);
+                moveStandardResourcesCallback(null, count);
                 return;
             }
         });
@@ -302,28 +297,28 @@ module.exports = (course, stepCallback) => {
     function createStandardResources(count, createStandardResourcesCallback) {
         /* create 'Standard Resources' text header */
         canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules/${studentResourcesId}/items`, {
-            'module_item': {
-                'title': 'Standard Resources',
-                'type': 'SubHeader',
-                'position': count + 1 // put it just before University Policies activity
-            }
-        },
-        (postErr) => {
-            if (postErr) {
-                /* still try to move everything around! */
-                course.error(postErr);
-            } else {
-                course.message('Successfully created Standard Resources text header');
-            }
-            createStandardResourcesCallback(null);
-        });
+                'module_item': {
+                    'title': 'Standard Resources',
+                    'type': 'SubHeader',
+                    'position': count + 1 // put it just before University Policies activity
+                }
+            },
+            (postErr) => {
+                if (postErr) {
+                    /* still try to move everything around! */
+                    course.error(postErr);
+                } else {
+                    course.message('Successfully created Standard Resources text header');
+                }
+                createStandardResourcesCallback(null);
+            });
     }
 
-    /**********************************************
+    /**************************************************
      * deleteModules()
      * Parameters: deleteModulesCallback
-     * WHAT DOES THIS FUNCTION DO???
-     **********************************************/
+     * Deletes the now-empty modules that are not used
+     **************************************************/
     function deleteModules(deleteModulesCallback) {
         /* if resources module exists, delete it */
         if (resourcesId !== -1) {
@@ -353,32 +348,33 @@ module.exports = (course, stepCallback) => {
     /**********************************************
      * createSupplementalHeader()
      * Parameters: createSupplementalCallback
+     * Creates text header "Standard Resources"
      **********************************************/
     function createSupplementalHeader(createSupplementalCallback) {
         /* create 'Supplemental Resources' text header */
         canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules/${studentResourcesId}/items`, {
-            'module_item': {
-                'title': 'Supplemental Resources',
-                'type': 'SubHeader',
-                'position': 1
-            }
-        },
-        (postErr) => {
-            if (postErr) {
-                createSupplementalCallback(postErr);
-                return;
-            } else {
-                course.message('Successfully created Supplemental Resources text header');
-                createSupplementalCallback(null);
-            }
-        });
+                'module_item': {
+                    'title': 'Supplemental Resources',
+                    'type': 'SubHeader',
+                    'position': 1
+                }
+            },
+            (postErr) => {
+                if (postErr) {
+                    createSupplementalCallback(postErr);
+                    return;
+                } else {
+                    course.message('Successfully created Supplemental Resources text header');
+                    createSupplementalCallback(null);
+                }
+            });
     }
 
-    /**********************************************
+    /******************************************************
      * moveStudentResourcesModule()
      * Parameters: moveCallback
-     * WHAT DOES THIS FUNCTION DO???
-     **********************************************/
+     * Makes Student Resources the last module on the page
+     ******************************************************/
     function moveStudentResourcesModule(moveCallback) {
         /* if no studentResources module exists, move to the next function */
         if (studentResourcesId === -1 || studentResourcesId === undefined) {
@@ -388,28 +384,29 @@ module.exports = (course, stepCallback) => {
 
         /* move 'Student Resources' to be the last module */
         canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${studentResourcesId}`, {
-            'module': {
-                /* add one to account for the added syllabus module */
-                'position': modulesLength + 1,
-                'published': true
-            }
-        },
-        (moveErr) => {
-            if (moveErr) {
-                moveCallback(moveErr);
-                return;
-            } else {
-                course.message('Successfully made Student Resources the last module');
-                moveCallback(null);
-            }
-        });
+                'module': {
+                    /* add one to account for the added syllabus module */
+                    'position': modulesLength + 1,
+                    'published': true
+                }
+            },
+            (moveErr) => {
+                if (moveErr) {
+                    moveCallback(moveErr);
+                    return;
+                } else {
+                    course.message('Successfully made Student Resources the last module');
+                    moveCallback(null);
+                }
+            });
     }
 
-    /*************************************************
+    /*******************************************************************
      * welcomeFolder()
      * Parameters: none
-     * WHAT DOES THIS FUNCTION DO???
-     *************************************************/
+     * Waterfall through the functions above. Functions are written in 
+     * order from the ones located at the top of the page to the bottom.
+     *******************************************************************/
     function welcomeFolder() {
         /* the functions to waterfall through */
         var myFunctions = [
@@ -418,7 +415,7 @@ module.exports = (course, stepCallback) => {
             getResourcesContents,
             moveResourcesContent,
             moveWelcomeContent,
-            moveAdditionalWelcomeContents,
+            moveStandardResourcesContent,
             createStandardResources,
             deleteModules,
             createSupplementalHeader,
