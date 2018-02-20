@@ -130,7 +130,6 @@ module.exports = (course, stepCallback) => {
             return;
         }
 
-
         /* for each item in the welcome module, move it to the student resources module */
         /* eachSeries helps avoid overloading the server */
         asyncLib.eachLimit(resourcesModuleItems, 5, (moduleItem, eachLimitCallback) => {
@@ -252,7 +251,7 @@ module.exports = (course, stepCallback) => {
      ********************************************************************************/
     function moveStandardResourcesContent(sortedIds, count, moveStandardResourcesCallback) {
         /* if no welcome module exists, move to the next function */
-        if (welcomeModuleId <= -1 || welcomeModuleId === undefined) {
+        if (welcomeModuleId === -1 || welcomeModuleId === undefined) {
             moveStandardResourcesCallback(null, null);
             return;
         }

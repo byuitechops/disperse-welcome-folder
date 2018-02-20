@@ -37,24 +37,24 @@ None
 1. Get the module list and check if there is a 'Welcome' module:
 	- If there is a 'Welcome' module, continue with the child module
 	- If not, end the child module
+    - Repeat step for 'Resources' module
 2. Check to see if a 'Student Resources' module exists:
 	- If there is a 'Student Resources' module, don't create a new one
 	- If there is not one, create one
 3. Create a 'Standard Resources' sub-module to move contents to from the 'Welcome' module
-4. Create a 'Supplementatl Resources' sub-module to move contents to from the 'Welcome' module
-5. If the 'How to Understand Due Dates' module item exists, delete it
-6. Move the contents from the 'Welcome' module into the 'Student Resources' module
-7. Delete the 'Welcome' module
-8. Move the 'Student Resources' module to be the last module
+4. Create a 'Supplemental Resources' sub-module to move contents to from the 'Welcome' module
+5. Move the contents from the 'Welcome' module into the 'Student Resources' module
+6. Delete the 'Welcome' and 'Resources' modules 
+7. Move the 'Student Resources' module to be the last module
 
 ## Log Categories
 
-None currently. Rewriting the child module currently and will document logs here as the child module is written.
+None
 
 ## Requirements
 
 1. Create a Student Resources module
 2. Disperse the contents of the Welome folder into the Student Resources module
-3. If there is a Resources module, disperse its contents into the Student Resources module
+3. If there is a Resources folder, disperse its contents into the Student Resources module
 4. Delete the Welcome folder
-5. Delete the Resources module
+5. Delete the Resources folder
