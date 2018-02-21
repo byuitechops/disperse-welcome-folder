@@ -1,9 +1,8 @@
 /*eslint-env node, es6*/
-/*eslint no-console:1*/
 
 /* Module Description */
-/* This child module goes through the welcome module and moves everything over to the
-Student Resources module. After moving everything, it deletes the welcome folder.*/
+/* This child module goes through both the welcome module and the resources module and moves everything 
+over to the Student Resources module. After moving everything, it deletes the welcome and resources modules.*/
 
 /* Include this line only if you are going to use Canvas API */
 const canvas = require('canvas-wrapper');
@@ -55,7 +54,15 @@ module.exports = (course, stepCallback) => {
                         course.warning('The Welcome folder and Resources folder don\'t exist.');
                         stepCallback(null, course);
                         return;
-                    }
+					}
+					
+					/* Log the module IDs */
+					course.log(`Already Existing Module`, {
+						'Welcome Module ID': welcomeModuleId,
+						'Student Resources Module ID': studentResourcesId,
+						'Resources Module ID': resourcesId,
+					});
+
                     getModuleIdsCallback(null);
                 });
             }
@@ -106,7 +113,7 @@ module.exports = (course, stepCallback) => {
             getResourcesContentsCallback(null, null);
             return;
         }
-        /* get module items from the Resources module, move them to the Student Resources module, and delete the module */
+        /* get module items from the Resources module and send them to the next function to move them to the Student Resources module */
         canvas.getModuleItems(course.info.canvasOU, resourcesId, (getModuleItemsErr, moduleItems) => {
             if (getModuleItemsErr) {
                 getResourcesContentsCallback(getModuleItemsErr, null);
@@ -146,9 +153,11 @@ module.exports = (course, stepCallback) => {
                     if (putErr) {
                         course.error(putErr);
                     } else {
-                        course.message(`Successfully moved ${item.title} into the Student Resources module from the Resources module`);
+						course.log('Items Moved from Resources Module to Student Resources Module', {
+							'Title': item.title,
+							'ID': item.id,
+						});
                     }
-
                     eachLimitCallback(null);
                 });
         }, (eachSeriesErr) => {
@@ -186,7 +195,6 @@ module.exports = (course, stepCallback) => {
             'Copyright and Source Information'
         ];
 
-
         /* get the module items from the welcome module */
         canvas.getModuleItems(course.info.canvasOU, welcomeModuleId, (getErr, moduleItems) => {
             if (getErr) {
@@ -219,13 +227,16 @@ module.exports = (course, stepCallback) => {
                             'new_tab': true,
                             'published': true,
                         }
-                    }, (putErr, results) => {
+                    }, (putErr, item) => {
                         if (putErr) {
                             eachCallback(putErr);
                             return;
                         } else {
-                            count++;
-                            course.message(`Successfully moved ${results.title} into the Student Resources module`);
+							count++;
+							course.log('Items Moved from Welcome Module to Student Resources Module', {
+								'Title': item.title,
+								'ID': item.id,
+							});
                             eachCallback(null);
                         }
                     });
@@ -268,12 +279,15 @@ module.exports = (course, stepCallback) => {
                         'published': true
                     }
                 },
-                (putErr, results) => {
+                (putErr, item) => {
                     if (putErr) {
                         eachOfSeriesCallback(putErr);
                         return;
                     } else {
-                        course.message(`Successfully moved ${results.title} into the Student Resources module`);
+						course.log('Items Moved from Welcome Module to Student Resources Module', {
+							'Title': item.title,
+							'ID': item.id,
+						});
                         eachOfSeriesCallback(null);
                     }
                 });
@@ -302,12 +316,14 @@ module.exports = (course, stepCallback) => {
                     'position': count + 1 // put it just before University Policies activity
                 }
             },
-            (postErr) => {
+            (postErr, item) => {
                 if (postErr) {
                     /* still try to move everything around! */
                     course.error(postErr);
                 } else {
-                    course.message('Successfully created Standard Resources text header');
+					course.log('Standard Resources Text Header Created', {
+						'ID': item.id,
+					});
                 }
                 createStandardResourcesCallback(null);
             });
@@ -358,12 +374,14 @@ module.exports = (course, stepCallback) => {
                     'position': 1
                 }
             },
-            (postErr) => {
+            (postErr, item) => {
                 if (postErr) {
                     createSupplementalCallback(postErr);
                     return;
                 } else {
-                    course.message('Successfully created Supplemental Resources text header');
+					course.log('Supplemental Resources Text Header Created', {
+						'ID': item.id,
+					});
                     createSupplementalCallback(null);
                 }
             });
