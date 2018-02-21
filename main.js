@@ -436,7 +436,7 @@ module.exports = (course, stepCallback) => {
             createStandardResources,
             deleteModules,
             createSupplementalHeader,
-            moveStudentResourcesModule
+            moveStudentResourcesModule,
         ];
 
         /* do async.waterfall here to run each of the functions */
