@@ -54,14 +54,14 @@ module.exports = (course, stepCallback) => {
                         course.warning('The Welcome folder and Resources folder don\'t exist.');
                         stepCallback(null, course);
                         return;
-					}
-					
-					/* Log the module IDs */
-					course.log(`Already Existing Module`, {
-						'Welcome Module ID': welcomeModuleId,
-						'Student Resources Module ID': studentResourcesId,
-						'Resources Module ID': resourcesId,
-					});
+                    }
+
+                    /* Log the module IDs */
+                    course.log(`Already Existing Module`, {
+                        'Welcome Module ID': welcomeModuleId,
+                        'Student Resources Module ID': studentResourcesId,
+                        'Resources Module ID': resourcesId,
+                    });
 
                     getModuleIdsCallback(null);
                 });
@@ -100,73 +100,6 @@ module.exports = (course, stepCallback) => {
                     return;
                 }
             });
-    }
-
-    /************************************************
-     * getResourcesContents()
-     * Parameters: getResourcesContentsCallback
-     * Get the module items from the resources folder
-     ************************************************/
-    function getResourcesContents(getResourcesContentsCallback) {
-        /* if there is no resources module, skip this function */
-        if (resourcesId === -1 || resourcesId === undefined) {
-            getResourcesContentsCallback(null, null);
-            return;
-        }
-        /* get module items from the Resources module and send them to the next function to move them to the Student Resources module */
-        canvas.getModuleItems(course.info.canvasOU, resourcesId, (getModuleItemsErr, moduleItems) => {
-            if (getModuleItemsErr) {
-                getResourcesContentsCallback(getModuleItemsErr, null);
-                return;
-            }
-            /* send the moduleItems to the next function to see if the contents need to be moved into the student resources module or not */
-            getResourcesContentsCallback(null, moduleItems);
-        });
-    }
-
-    /*******************************************************************
-     * moveResourcesContent()
-     * Parameters: resourcesModuleItems, moveResourcesContentCallback
-     * Move contents from Resources folder to Student Resources module
-     *******************************************************************/
-    function moveResourcesContent(resourcesModuleItems, moveResourcesContentCallback) {
-        /* if there is no resources module, or if it exists but is empty, move to the next function */
-        if (resourcesId === -1 || resourcesModuleItems == undefined || resourcesModuleItems.length === 0) {
-            course.message('The Resources module either doesn\'t exist, or is empty. No need to move its contents');
-            moveResourcesContentCallback(null);
-            return;
-        }
-
-        /* for each item in the welcome module, move it to the student resources module */
-        /* eachSeries helps avoid overloading the server */
-        asyncLib.eachLimit(resourcesModuleItems, 5, (moduleItem, eachLimitCallback) => {
-            canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${resourcesId}/items/${moduleItem.id}`, {
-                    'module_item': {
-                        'module_id': studentResourcesId,
-                        'indent': 1,
-                        'position': 1,
-                        'new_tab': true,
-                        'published': true
-                    }
-                },
-                (putErr, item) => {
-                    if (putErr) {
-                        course.error(putErr);
-                    } else {
-						course.log('Items Moved from Resources Module to Student Resources Module', {
-							'Title': item.title,
-							'ID': item.id,
-						});
-                    }
-                    eachLimitCallback(null);
-                });
-        }, (eachSeriesErr) => {
-            if (eachSeriesErr) {
-                moveResourcesContentCallback(eachSeriesErr);
-                return;
-            }
-            moveResourcesContentCallback(null);
-        });
     }
 
     /**************************************************************************
@@ -232,11 +165,11 @@ module.exports = (course, stepCallback) => {
                             eachCallback(putErr);
                             return;
                         } else {
-							count++;
-							course.log('Items Moved from Welcome Module to Student Resources Module', {
-								'Title': item.title,
-								'ID': item.id,
-							});
+                            count++;
+                            course.log('Items Moved from Welcome Module to Supplemental Resources', {
+                                'Title': item.title,
+                                'ID': item.id,
+                            });
                             eachCallback(null);
                         }
                     });
@@ -268,8 +201,8 @@ module.exports = (course, stepCallback) => {
         }
 
         asyncLib.eachOfSeries(sortedIds, (id, key, eachOfSeriesCallback) => {
-            /* go through and put every item in sortedIds (the part for required order portion) into the
-			student resources module at position + 1 */
+            /* go through and put every item in sortedIds (the part for required order portion)
+            into the student resources module at position + 1 */
             canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items/${id}`, {
                     'module_item': {
                         'module_id': studentResourcesId,
@@ -284,10 +217,10 @@ module.exports = (course, stepCallback) => {
                         eachOfSeriesCallback(putErr);
                         return;
                     } else {
-						course.log('Items Moved from Welcome Module to Student Resources Module', {
-							'Title': item.title,
-							'ID': item.id,
-						});
+                        course.log('Items Moved from Welcome Module to Standard Resources', {
+                            'Title': item.title,
+                            'ID': item.id,
+                        });
                         eachOfSeriesCallback(null);
                     }
                 });
@@ -321,12 +254,79 @@ module.exports = (course, stepCallback) => {
                     /* still try to move everything around! */
                     course.error(postErr);
                 } else {
-					course.log('Standard Resources Text Header Created', {
-						'ID': item.id,
-					});
+                    course.log('Standard Resources Text Header Created', {
+                        'ID': item.id,
+                    });
                 }
                 createStandardResourcesCallback(null);
             });
+    }
+
+    /************************************************
+     * getResourcesContents()
+     * Parameters: getResourcesContentsCallback
+     * Get the module items from the resources folder
+     ************************************************/
+    function getResourcesContents(getResourcesContentsCallback) {
+        /* if there is no resources module, skip this function */
+        if (resourcesId === -1 || resourcesId === undefined) {
+            getResourcesContentsCallback(null, null);
+            return;
+        }
+        /* get module items from the Resources module and send them to the next function to move them to the Student Resources module */
+        canvas.getModuleItems(course.info.canvasOU, resourcesId, (getModuleItemsErr, moduleItems) => {
+            if (getModuleItemsErr) {
+                getResourcesContentsCallback(getModuleItemsErr, null);
+                return;
+            }
+            /* send the moduleItems to the next function to see if the contents need to be moved into the student resources module or not */
+            getResourcesContentsCallback(null, moduleItems);
+        });
+    }
+
+    /*******************************************************************
+     * moveResourcesContent()
+     * Parameters: resourcesModuleItems, moveResourcesContentCallback
+     * Move contents from Resources folder to Student Resources module
+     *******************************************************************/
+    function moveResourcesContent(resourcesModuleItems, moveResourcesContentCallback) {
+        /* if there is no resources module, or if it exists but is empty, move to the next function */
+        if (resourcesId === -1 || resourcesModuleItems === undefined || resourcesModuleItems.length === 0) {
+            course.message('The Resources module either doesn\'t exist, or is empty. No need to move its contents');
+            moveResourcesContentCallback(null);
+            return;
+        }
+
+        /* for each item in the welcome module, move it to the student resources module */
+        /* eachSeries helps avoid overloading the server */
+        asyncLib.eachLimit(resourcesModuleItems, 5, (moduleItem, eachLimitCallback) => {
+            canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${resourcesId}/items/${moduleItem.id}`, {
+                    'module_item': {
+                        'module_id': studentResourcesId,
+                        'indent': 1,
+                        'position': 1,
+                        'new_tab': true,
+                        'published': true
+                    }
+                },
+                (putErr, item) => {
+                    if (putErr) {
+                        course.error(putErr);
+                    } else {
+                        course.log('Items Moved from Resources Module to Student Resources Module', {
+                            'Title': item.title,
+                            'ID': item.id,
+                        });
+                    }
+                    eachLimitCallback(null);
+                });
+        }, (eachSeriesErr) => {
+            if (eachSeriesErr) {
+                moveResourcesContentCallback(eachSeriesErr);
+                return;
+            }
+            moveResourcesContentCallback(null);
+        });
     }
 
     /**************************************************
@@ -379,9 +379,9 @@ module.exports = (course, stepCallback) => {
                     createSupplementalCallback(postErr);
                     return;
                 } else {
-					course.log('Supplemental Resources Text Header Created', {
-						'ID': item.id,
-					});
+                    course.log('Supplemental Resources Text Header Created', {
+                        'ID': item.id,
+                    });
                     createSupplementalCallback(null);
                 }
             });
@@ -429,11 +429,11 @@ module.exports = (course, stepCallback) => {
         var myFunctions = [
             getModuleIds,
             makeStudentResourcesModule,
-            getResourcesContents,
-            moveResourcesContent,
             moveWelcomeContent,
             moveStandardResourcesContent,
             createStandardResources,
+            getResourcesContents,
+            moveResourcesContent,
             deleteModules,
             createSupplementalHeader,
             moveStudentResourcesModule,

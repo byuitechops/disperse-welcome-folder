@@ -49,7 +49,12 @@ None
 
 ## Log Categories
 
-None
+Already Existing Module
+Items Moved from Resources Module to Student Resources Module
+Items Moved from Welcome Module to Supplemental Resources
+Items Moved from Welcome Module to Standard Resources
+Supplemental Resources Text Header Created
+Standard Resources Text Header Created
 
 ## Requirements
 
