@@ -50,7 +50,8 @@ module.exports = (course, stepCallback) => {
                     }
 
                     /* end program if there is no welcome module and no resources module */
-                    if ((welcomeModuleId == -1 || welcomeModuleId === undefined) && (resourcesId == -1 || resourcesId === undefined)) {
+                    if ((welcomeModuleId === -1 || typeof welcomeModuleId === "undefined") && 
+                        (resourcesId === -1 || typeof resourcesId === "undefined")) {
                         /* move on to the next child module */
                         course.warning('The Welcome folder and Resources folder don\'t exist.');
                         stepCallback(null, course);
@@ -102,7 +103,7 @@ module.exports = (course, stepCallback) => {
      ************************************************/
     function getResourcesContents(getResourcesContentsCallback) {
         /* if there is no resources module, skip this function */
-        if (resourcesId === -1 || resourcesId === undefined) {
+        if (resourcesId === -1 || typeof resourcesId === "undefined") {
             getResourcesContentsCallback(null, null);
             return;
         }
@@ -124,11 +125,15 @@ module.exports = (course, stepCallback) => {
      *******************************************************************/
     function moveResourcesContent(resourcesModuleItems, moveResourcesContentCallback) {
         /* if there is no resources module, or if it exists but is empty, move to the next function */
-        if (resourcesId === -1 || resourcesModuleItems == undefined || resourcesModuleItems.length === 0) {
+        if (resourcesId === -1 || 
+            typeof resourcesModuleItems === "undefined" || 
+            resourcesModuleItems.length === 0) {
+
             course.message('The Resources module either doesn\'t exist, or is empty. No need to move its contents');
             moveResourcesContentCallback(null);
             return;
         }
+
 
         /* for each item in the welcome module, move it to the student resources module */
         /* eachSeries helps avoid overloading the server */
@@ -170,14 +175,14 @@ module.exports = (course, stepCallback) => {
     function moveWelcomeContent(moveWelcomeContentCallback) {
         /* move everything to the 'Student Resources' folder
 		if no welcome module exists, move to the next function */
-        if (welcomeModuleId === -1 || welcomeModuleId === undefined) {
+        if (welcomeModuleId === -1 || typeof welcomeModuleId === "undefined") {
             moveWelcomeContentCallback(null);
             return;
         }
 
         var sortedIds = [];
         var count = 0;
-        var order = [
+        var standardResourcesOrder = [
             'University Policies',
             'Online Support Center',
             'Library Research Guide',
@@ -195,10 +200,10 @@ module.exports = (course, stepCallback) => {
             }
 
             /* build an array that supports the required order found in the OCT course */
-            for (var i = 0; i < order.length; i++) {
+            for (var i = 0; i < standardResourcesOrder.length; i++) {
                 for (var j = 0; j < moduleItems.length; j++) {
                     // found the item -> push and break out of inner loop
-                    if (order[i] === moduleItems[j].title) {
+                    if (standardResourcesOrder[i] === moduleItems[j].title) {
                         sortedIds.push(moduleItems[j].id);
                         break;
                     }
@@ -210,7 +215,7 @@ module.exports = (course, stepCallback) => {
             asyncLib.eachOfSeries(moduleItems, (moduleItem, key, eachCallback) => {
                 /* check if it belongs in the Standard Resources subHeader. If not, set position
 				to '1' to put under Supplemental Resources subHeader */
-                if (!order.includes(moduleItem.title)) {
+                if (!standardResourcesOrder.includes(moduleItem.title)) {
                     canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items/${moduleItem.id}`, {
                         'module_item': {
                             'module_id': studentResourcesId,
@@ -251,7 +256,7 @@ module.exports = (course, stepCallback) => {
      ********************************************************************************/
     function moveStandardResourcesContent(sortedIds, count, moveStandardResourcesCallback) {
         /* if no welcome module exists, move to the next function */
-        if (welcomeModuleId === -1 || welcomeModuleId === undefined) {
+        if (welcomeModuleId <= -1 || typeof welcomeModuleId === "undefined") {
             moveStandardResourcesCallback(null, null);
             return;
         }
@@ -376,7 +381,7 @@ module.exports = (course, stepCallback) => {
      ******************************************************/
     function moveStudentResourcesModule(moveCallback) {
         /* if no studentResources module exists, move to the next function */
-        if (studentResourcesId === -1 || studentResourcesId === undefined) {
+        if (studentResourcesId === -1 || typeof studentResourcesId === "undefined") {
             moveCallback(null);
             return;
         }
