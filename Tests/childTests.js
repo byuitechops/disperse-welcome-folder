@@ -1,18 +1,16 @@
-/*eslint-env node, es6*/
-
 /* Dependencies */
 const tap = require('tap');
+const canvas = require('canvas-wrapper');
 
-function g1Tests(course, callback) {
-    // Tap tests for Gauntlet 1 go here
-    tap.pass('Success! Wheee! 1');
-    // tap.fail('YOLO');
+module.exports = (course, callback) => {
+    tap.test('child-template', (test) => {
+
+        test.pass('potato');
+        test.pass('tomato');
+        test.fail('avacado');
+
+        test.end();
+    });
+
     callback(null, course);
-}
-
-module.exports = [
-        {
-            gauntlet: 1,
-            tests: g1Tests
-        }
-];
+};
