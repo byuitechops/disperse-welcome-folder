@@ -1,7 +1,6 @@
 /* Dependencies */
 const tap = require('tap');
 const canvas = require('canvas-wrapper');
-<<<<<<< HEAD
 const asyncLib = require ('async');
 
 module.exports = (course, callback) => {
