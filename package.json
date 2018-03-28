@@ -4,7 +4,7 @@
 	"description": "The main purpose of this child module is to move the contents out of the Welcome module into the Student Resources module. Once the Welcome module is empty, it is then deleted from the course.",
 	"main": "main.js",
 	"dependencies": {
-		"canvas-wrapper": "git+https://github.com/byuitechops/Canvas-wrapper.git"
+		"canvas-wrapper": "github:byuitechops/canvas-wrapper"
 	},
 	"devDependencies": {
 		"async": "^2.6.0",
