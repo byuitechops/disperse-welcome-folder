@@ -256,8 +256,8 @@ module.exports = (course, stepCallback) => {
      ********************************************************************************/
     function moveStandardResourcesContent(sortedIds, count, moveStandardResourcesCallback) {
         /* if no welcome module exists, move to the next function */
-        if (welcomeModuleId <= -1 || typeof welcomeModuleId === "undefined") {
-            moveStandardResourcesCallback(null, null);
+        if (typeof welcomeModuleId === "undefined" || welcomeModuleId <= -1) {
+            moveStandardResourcesCallback(null, 0);
             return;
         }
 
