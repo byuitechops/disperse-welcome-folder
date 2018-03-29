@@ -176,7 +176,7 @@ module.exports = (course, stepCallback) => {
         /* move everything to the 'Student Resources' folder
 		if no welcome module exists, move to the next function */
         if (welcomeModuleId === -1 || typeof welcomeModuleId === "undefined") {
-            moveWelcomeContentCallback(null);
+            moveWelcomeContentCallback(null, null, null);
             return;
         }
 
@@ -256,8 +256,8 @@ module.exports = (course, stepCallback) => {
      ********************************************************************************/
     function moveStandardResourcesContent(sortedIds, count, moveStandardResourcesCallback) {
         /* if no welcome module exists, move to the next function */
-        if (typeof welcomeModuleId === "undefined" || welcomeModuleId <= -1) {
-            moveStandardResourcesCallback(null, 0);
+        if (typeof welcomeModuleId === 'undefined' || welcomeModuleId <= -1) {
+            moveStandardResourcesCallback(null, null);
             return;
         }
 
