@@ -35,11 +35,15 @@ module.exports = (course, callback) => {
         function getItems(getItemsCallback) {
             /* Desired order of module items in Student Resources Module */
             var order = [
+                'Supplemental Resources',
+                'Orientation to Online Learning',
+                'Discussion Forums',
+                'Syllabus',
+                'Standard Resources',
                 'University Policies',
                 'Online Support Center',
                 'Library Research Guide',
                 'Academic Support Center',
-                'Copyright & Source Information',
                 'Copyright and Source Information',
             ];
 
@@ -62,7 +66,7 @@ module.exports = (course, callback) => {
 
         var myFunctions = [
             getModules,
-            //getItems,
+            getItems,
         ];
 
         asyncLib.waterfall(myFunctions, (waterfallErr) => {
