@@ -140,7 +140,7 @@ module.exports = (course, stepCallback) => {
         asyncLib.eachLimit(resourcesModuleItems, 5, (moduleItem, eachLimitCallback) => {
             canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${resourcesId}/items/${moduleItem.id}`, {
                     'module_item': {
-                        'module_id': studentResourcesId,
+                        'module_id': welcomeModuleId,
                         'indent': 1,
                         'position': 1,
                         'new_tab': true,
@@ -151,7 +151,7 @@ module.exports = (course, stepCallback) => {
                     if (putErr) {
                         course.error(putErr);
                     } else {
-                        course.message(`Successfully moved ${item.title} into the Student Resources module from the Resources module`);
+                        course.message(`Successfully moved ${item.title} into the Welcome module from the Resources module`);
                     }
 
                     eachLimitCallback(null);
@@ -186,11 +186,13 @@ module.exports = (course, stepCallback) => {
             'University Policies',
             'Online Support Center',
             'Library Research Guide',
+            'Library Research Guides',
             'Academic Support Center',
+            'Copyright & Source Info',
+            'Copyright and Source Info',
             'Copyright & Source Information',
-            'Copyright and Source Information'
+            'Copyright and Source Information',
         ];
-
 
         /* get the module items from the welcome module */
         canvas.getModuleItems(course.info.canvasOU, welcomeModuleId, (getErr, moduleItems) => {
@@ -203,7 +205,7 @@ module.exports = (course, stepCallback) => {
             for (var i = 0; i < standardResourcesOrder.length; i++) {
                 for (var j = 0; j < moduleItems.length; j++) {
                     // found the item -> push and break out of inner loop
-                    if (standardResourcesOrder[i] === moduleItems[j].title) {
+                    if (standardResourcesOrder[i].toLowerCase() === moduleItems[j].title.toLowerCase()) {
                         sortedIds.push(moduleItems[j].id);
                         break;
                     }
