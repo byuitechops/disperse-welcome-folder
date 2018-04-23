@@ -258,7 +258,7 @@ module.exports = (course, stepCallback) => {
      ********************************************************************************/
     function moveStandardResourcesContent(sortedIds, count, moveStandardResourcesCallback) {
         /* if no welcome module exists, move to the next function */
-        if (typeof welcomeModuleId === 'undefined' || welcomeModuleId <= -1) {
+        if (typeof welcomeModuleId === 'undefined' || welcomeModuleId === -1) {
             moveStandardResourcesCallback(null, null);
             return;
         }
@@ -327,7 +327,7 @@ module.exports = (course, stepCallback) => {
      **************************************************/
     function deleteModules(deleteModulesCallback) {
         /* if resources module exists, delete it */
-        if (resourcesId !== -1) {
+        if (typeof resourcesId !== "undefined" && resourcesId !== -1) {
             canvas.delete(`/api/v1/courses/${course.info.canvasOU}/modules/${resourcesId}`, (deleteErr) => {
                 if (deleteErr) {
                     course.error(deleteErr);
@@ -338,7 +338,7 @@ module.exports = (course, stepCallback) => {
         }
 
         /* if a welcome module exists, delete it */
-        if (welcomeModuleId !== -1) {
+        if (typeof welcomeModuleId !== "undefined" && welcomeModuleId !== -1) {
             canvas.delete(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}`, (deleteErr) => {
                 if (deleteErr) {
                     deleteModulesCallback(deleteErr);
@@ -383,7 +383,7 @@ module.exports = (course, stepCallback) => {
      ******************************************************/
     function moveStudentResourcesModule(moveCallback) {
         /* if no studentResources module exists, move to the next function */
-        if (studentResourcesId === -1 || typeof studentResourcesId === "undefined") {
+        if (typeof studentResourcesId === "undefined" || studentResourcesId === -1) {
             moveCallback(null);
             return;
         }
