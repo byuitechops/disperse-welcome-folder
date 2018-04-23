@@ -137,7 +137,11 @@ module.exports = (course, stepCallback) => {
 
         /* for each item in the welcome module, move it to the student resources module */
         /* eachSeries helps avoid overloading the server */
-        asyncLib.eachLimit(resourcesModuleItems, 5, (moduleItem, eachLimitCallback) => {
+        asyncLib.eachSeries(resourcesModuleItems, (moduleItem, eachLimitCallback) => {
+            if (moduleItem.id === undefined) {
+                moveResourcesContentCallback(null);
+                return;
+            } 
             canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${resourcesId}/items/${moduleItem.id}`, {
                     'module_item': {
                         'module_id': welcomeModuleId,
@@ -217,7 +221,7 @@ module.exports = (course, stepCallback) => {
             asyncLib.eachOfSeries(moduleItems, (moduleItem, key, eachCallback) => {
                 /* check if it belongs in the Standard Resources subHeader. If not, set position
 				to '1' to put under Supplemental Resources subHeader */
-                if (!standardResourcesOrder.includes(moduleItem.title)) {
+                if (!standardResourcesOrder.includes(moduleItem.title) && moduleItem.id !== undefined) {
                     canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${welcomeModuleId}/items/${moduleItem.id}`, {
                         'module_item': {
                             'module_id': studentResourcesId,
