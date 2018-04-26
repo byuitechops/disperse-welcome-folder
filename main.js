@@ -30,12 +30,12 @@ module.exports = (course, stepCallback) => {
             } else {
                 modulesLength = moduleList.length;
                 course.message(`Successfully retrieved ${modulesLength} modules.`);
-                
+
                 /* loop through list of modules and set the different IDs */
                 asyncLib.each(moduleList, (module, eachCallback) => {
-                    if (/^\s*welcome(\s|\S)?$/i.test(module.name)) {
+                    if (/^\s*welcome(\s|\S)?\s*$/i.test(module.name)) {
                         welcomeModuleId = module.id;
-                    } else if (/^\s*student\s*resources$/i.test(module.name)) {
+                    } else if (/^\s*student\s*resources\s*$/i.test(module.name)) {
                         studentResourcesId = module.id;
                     } else if (/^\s*resources\s*$/i.test(module.name)) {
                         resourcesId = module.id;
@@ -50,7 +50,7 @@ module.exports = (course, stepCallback) => {
                     }
 
                     /* end program if there is no welcome module and no resources module */
-                    if ((welcomeModuleId === -1 || typeof welcomeModuleId === "undefined") && 
+                    if ((welcomeModuleId === -1 || typeof welcomeModuleId === "undefined") &&
                         (resourcesId === -1 || typeof resourcesId === "undefined")) {
                         /* move on to the next child module */
                         course.warning('The Welcome folder and Resources folder don\'t exist.');
@@ -125,9 +125,8 @@ module.exports = (course, stepCallback) => {
      *******************************************************************/
     function moveResourcesContent(resourcesModuleItems, moveResourcesContentCallback) {
         /* if there is no resources module, or if it exists but is empty, move to the next function */
-        if (resourcesId === -1 || 
-            typeof resourcesModuleItems === "undefined" || 
-            resourcesModuleItems.length === 0) {
+        if (typeof resourcesId === 'undefined' || resourcesId === -1 ||
+            typeof resourcesModuleItems === "undefined" || resourcesModuleItems.length === 0) {
 
             course.message('The Resources module either doesn\'t exist, or is empty. No need to move its contents');
             moveResourcesContentCallback(null);
@@ -135,13 +134,13 @@ module.exports = (course, stepCallback) => {
         }
 
 
-        /* for each item in the welcome module, move it to the student resources module */
+        /* for each item in the resources module, move it to the student resources module */
         /* eachSeries helps avoid overloading the server */
         asyncLib.eachSeries(resourcesModuleItems, (moduleItem, eachLimitCallback) => {
             if (moduleItem.id === undefined) {
                 moveResourcesContentCallback(null);
                 return;
-            } 
+            }
             canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${resourcesId}/items/${moduleItem.id}`, {
                     'module_item': {
                         'module_id': welcomeModuleId,
@@ -179,7 +178,7 @@ module.exports = (course, stepCallback) => {
     function moveWelcomeContent(moveWelcomeContentCallback) {
         /* move everything to the 'Student Resources' folder
 		if no welcome module exists, move to the next function */
-        if (welcomeModuleId === -1 || typeof welcomeModuleId === "undefined") {
+        if (typeof welcomeModuleId === "undefined" || welcomeModuleId === -1) {
             moveWelcomeContentCallback(null, null, null);
             return;
         }
@@ -262,7 +261,8 @@ module.exports = (course, stepCallback) => {
      ********************************************************************************/
     function moveStandardResourcesContent(sortedIds, count, moveStandardResourcesCallback) {
         /* if no welcome module exists, move to the next function */
-        if (typeof welcomeModuleId === 'undefined' || welcomeModuleId === -1) {
+        if (typeof welcomeModuleId === 'undefined' || welcomeModuleId === -1 ||
+            typeof studentResourcesId === 'undefined' || studentResourcesId === -1) {
             moveStandardResourcesCallback(null, null);
             return;
         }
@@ -305,6 +305,11 @@ module.exports = (course, stepCallback) => {
      * Creates text header "Standard Resources"
      **********************************************/
     function createStandardResources(count, createStandardResourcesCallback) {
+        /* if no student resources module exists, move to the next function */
+        if (typeof studentResourcesId === 'undefined' || studentResourcesId === -1) {
+            moveStandardResourcesCallback(null, null);
+            return;
+        }
         /* create 'Standard Resources' text header */
         canvas.post(`/api/v1/courses/${course.info.canvasOU}/modules/${studentResourcesId}/items`, {
                 'module_item': {
