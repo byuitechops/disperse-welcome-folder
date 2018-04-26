@@ -30,14 +30,14 @@ module.exports = (course, stepCallback) => {
             } else {
                 modulesLength = moduleList.length;
                 course.message(`Successfully retrieved ${modulesLength} modules.`);
-
+                
                 /* loop through list of modules and set the different IDs */
                 asyncLib.each(moduleList, (module, eachCallback) => {
-                    if (module.name === 'Welcome') {
+                    if (/^\s*welcome(\s|\S)?$/i.test(module.name)) {
                         welcomeModuleId = module.id;
-                    } else if (module.name === 'Student Resources') {
+                    } else if (/^\s*student\s*resources$/i.test(module.name)) {
                         studentResourcesId = module.id;
-                    } else if (module.name === 'Resources') {
+                    } else if (/^\s*resources\s*$/i.test(module.name)) {
                         resourcesId = module.id;
                     }
                     /* call the next iteration of asyncLib.each() */
