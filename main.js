@@ -1,6 +1,3 @@
-/*eslint-env node, es6*/
-/*eslint no-console:1*/
-
 /* Module Description */
 /* This child module goes through the welcome module and moves everything over to the
 Student Resources module. After moving everything, it deletes the welcome folder.*/
@@ -48,7 +45,12 @@ module.exports = (course, stepCallback) => {
                         getModuleIdsCallback(eachErr);
                         return;
                     }
-
+                    /* If the welcome module doesn't exist but the resources module does, 
+                    treat the resources module as if it were the welcome module */
+                    if (welcomeModuleId === -1 && resourcesId !== -1) {
+                        welcomeModuleId = resourcesId;
+                        resourcesId = -1;
+                    }
                     /* end program if there is no welcome module and no resources module */
                     if ((welcomeModuleId === -1 || typeof welcomeModuleId === "undefined") &&
                         (resourcesId === -1 || typeof resourcesId === "undefined")) {
@@ -123,16 +125,17 @@ module.exports = (course, stepCallback) => {
      * Parameters: resourcesModuleItems, moveResourcesContentCallback
      * Move contents from Resources folder to Student Resources module
      *******************************************************************/
-    function moveResourcesContent(resourcesModuleItems, moveResourcesContentCallback) {
+    function moveResourcesContent(reversedModuleItems, moveResourcesContentCallback) {
         /* if there is no resources module, or if it exists but is empty, move to the next function */
         if (typeof resourcesId === 'undefined' || resourcesId === -1 ||
-            typeof resourcesModuleItems === "undefined" || resourcesModuleItems.length === 0) {
+            typeof reversedModuleItems === "undefined" || reversedModuleItems.length === 0) {
 
             course.message('The Resources module either doesn\'t exist, or is empty. No need to move its contents');
             moveResourcesContentCallback(null);
             return;
         }
-
+        /* Array needs to be reversed for the PUT */
+        resourcesModuleItems = reversedModuleItems.reverse();
 
         /* for each item in the resources module, move it to the student resources module */
         /* eachSeries helps avoid overloading the server */
@@ -198,11 +201,13 @@ module.exports = (course, stepCallback) => {
         ];
 
         /* get the module items from the welcome module */
-        canvas.getModuleItems(course.info.canvasOU, welcomeModuleId, (getErr, moduleItems) => {
+        canvas.getModuleItems(course.info.canvasOU, welcomeModuleId, (getErr, reversedModuleItems) => {
             if (getErr) {
                 moveWelcomeContentCallback(getErr, null, null);
                 return;
             }
+            /* Array needs to be reversed for the PUT */
+            var moduleItems = reversedModuleItems.reverse();
 
             /* build an array that supports the required order found in the OCT course */
             for (var i = 0; i < standardResourcesOrder.length; i++) {
@@ -399,21 +404,20 @@ module.exports = (course, stepCallback) => {
 
         /* move 'Student Resources' to be the last module */
         canvas.put(`/api/v1/courses/${course.info.canvasOU}/modules/${studentResourcesId}`, {
-                'module': {
-                    /* add one to account for the added syllabus module */
-                    'position': modulesLength + 1,
-                    'published': true
-                }
-            },
-            (moveErr) => {
-                if (moveErr) {
-                    moveCallback(moveErr);
-                    return;
-                } else {
-                    course.message('Successfully made Student Resources the last module');
-                    moveCallback(null);
-                }
-            });
+            'module': {
+                /* add one to account for the added syllabus module */
+                'position': modulesLength + 1,
+                'published': true
+            }
+        }, (moveErr) => {
+            if (moveErr) {
+                moveCallback(moveErr);
+                return;
+            } else {
+                course.message('Successfully made Student Resources the last module');
+                moveCallback(null);
+            }
+        });
     }
 
     /*******************************************************************
