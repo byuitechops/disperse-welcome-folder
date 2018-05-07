@@ -1,6 +1,6 @@
 /* Module Description */
-/* This child module goes through the welcome module and moves everything over to the
-Student Resources module. After moving everything, it deletes the welcome folder.*/
+/* This child module goes through the Welcome module and Resources module and moves everything over to the
+Student Resources module. After moving everything, it deletes the Welcome module and the Resources module.*/
 
 /* Include this line only if you are going to use Canvas API */
 const canvas = require('canvas-wrapper');
@@ -26,7 +26,6 @@ module.exports = (course, stepCallback) => {
                 return;
             } else {
                 modulesLength = moduleList.length;
-                course.message(`Successfully retrieved ${modulesLength} modules.`);
 
                 /* loop through list of modules and set the different IDs */
                 asyncLib.each(moduleList, (module, eachCallback) => {
@@ -89,7 +88,11 @@ module.exports = (course, stepCallback) => {
                     makeStudentResourcesCallback(postErr);
                     return;
                 } else {
-                    course.message(`Successfully created Student Resources module. Id: ${module.id}`);
+                    course.log(`Created Student Resources Module`, {
+                        'ID': module.id,
+                        'Position': module.position,
+                    });
+
                     /* the update module call in the canvas api requires the endpoint module id */
                     studentResourcesId = module.id;
                     makeStudentResourcesCallback(null);
@@ -153,11 +156,15 @@ module.exports = (course, stepCallback) => {
                         'published': true
                     }
                 },
-                (putErr, item) => {
+                (putErr, currItem) => {
                     if (putErr) {
                         course.error(putErr);
                     } else {
-                        course.message(`Successfully moved ${item.title} into the Welcome module from the Resources module`);
+                        course.log(`Moved Module Item into the Welcome Module from the Resources Module`, {
+                            'ID': currItem.id,
+                            'Title': currItem.title,
+                            'Position': currItem.position,
+                        });
                     }
 
                     eachLimitCallback(null);
@@ -234,13 +241,17 @@ module.exports = (course, stepCallback) => {
                             'new_tab': true,
                             'published': true,
                         }
-                    }, (putErr, results) => {
+                    }, (putErr, currItem) => {
                         if (putErr) {
                             eachCallback(putErr);
                             return;
                         } else {
                             count++;
-                            course.message(`Successfully moved ${results.title} into the Student Resources module`);
+                            course.log(`Moved Module Item into Student Resources Module`, {
+                                'ID': currItem.id,
+                                'Title': currItem.title,
+                                'Position': currItem.position,
+                            });
                             eachCallback(null);
                         }
                     });
@@ -284,12 +295,16 @@ module.exports = (course, stepCallback) => {
                         'published': true
                     }
                 },
-                (putErr, results) => {
+                (putErr, moduleItem) => {
                     if (putErr) {
                         eachOfSeriesCallback(putErr);
                         return;
                     } else {
-                        course.message(`Successfully moved ${results.title} into the Student Resources module`);
+                        course.log(`Moved Module Item into Student Resources Module`, {
+                            'ID': moduleItem.id,
+                            'Title': moduleItem.title,
+                            'Position': moduleItem.position,
+                        });
                         eachOfSeriesCallback(null);
                     }
                 });
@@ -323,12 +338,15 @@ module.exports = (course, stepCallback) => {
                     'position': count + 1 // put it just before University Policies activity
                 }
             },
-            (postErr) => {
+            (postErr, newHeader) => {
                 if (postErr) {
                     /* still try to move everything around! */
                     course.error(postErr);
                 } else {
-                    course.message('Successfully created Standard Resources text header');
+                    course.log('Created Standard Resources SubHeader', {
+                        'Module Item ID': newHeader.id,
+                        'Module Item Position': newHeader.position,
+                    });
                 }
                 createStandardResourcesCallback(null);
             });
@@ -346,7 +364,9 @@ module.exports = (course, stepCallback) => {
                 if (deleteErr) {
                     course.error(deleteErr);
                 } else {
-                    course.message('Successfully deleted the Resources module');
+                    course.log('Deleted the Resources Module', {
+                        'Module ID': resourcesId,          
+                    });
                 }
             });
         }
@@ -358,7 +378,9 @@ module.exports = (course, stepCallback) => {
                     deleteModulesCallback(deleteErr);
                     return;
                 }
-                course.message('Successfully deleted the Welcome module');
+                course.log('Deleted the Welcome Module', {
+                    'Module ID': welcomeModuleId,          
+                });
                 deleteModulesCallback(null);
             });
         } else
@@ -379,12 +401,15 @@ module.exports = (course, stepCallback) => {
                     'position': 1
                 }
             },
-            (postErr) => {
+            (postErr, newHeader) => {
                 if (postErr) {
                     createSupplementalCallback(postErr);
                     return;
                 } else {
-                    course.message('Successfully created Supplemental Resources text header');
+                    course.log('Created Supplemental Resources SubHeader', {
+                        'Module Item ID': newHeader.id,
+                        'Module Item Position': newHeader.position,
+                    });
                     createSupplementalCallback(null);
                 }
             });
@@ -409,12 +434,15 @@ module.exports = (course, stepCallback) => {
                 'position': modulesLength + 1,
                 'published': true
             }
-        }, (moveErr) => {
+        }, (moveErr, studentResourcesModule) => {
             if (moveErr) {
                 moveCallback(moveErr);
                 return;
             } else {
-                course.message('Successfully made Student Resources the last module');
+                course.log('Made Student Resources the Last Module', {
+                    'Module ID': studentResourcesModule.id,
+                    'Module Position': studentResourcesModule.position,
+                });
                 moveCallback(null);
             }
         });
